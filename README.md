@@ -11,9 +11,10 @@
 - **Dual Visual Themes:**
   - 🎨 **Sketch Hand-Drawn Mode:** Organic hand-drawn shapes powered by [Rough.js](https://roughjs.com/), graph-paper backgrounds, and Caveat typography.
   - 💎 **Clean Pro Studio Mode:** High-contrast dark blueprint layout (`#090d16`), glowing SVG elements, neon pointer pills, and JetBrains Mono code rendering.
-- **Modern AI & Algorithm Modules:**
-  - **Modern AI:** Transformer Self-Attention Head (Query/Key causal context window, soft-attention matrix, and Softmax Next-Token Probability distribution).
-  - **Algorithms:** Bubble Sort with early termination, Binary Search with $L, M, R$ pointer convergence.
+- **Modern AI & Machine Learning Modules:**
+  - **Classical Machine Learning:** Linear Regression & Gradient Descent, Logistic Regression & Sigmoid Decision Boundary, Confusion Matrix & Classification Metrics (TP, FP, FN, TN, Accuracy Paradox, Precision-Recall trade-off across thresholds).
+  - **Deep Learning & Neural Networks:** Artificial Neuron (Perceptron vs. Modern Sigmoid/ReLU), Multi-Layer Perceptron (MLP) forward pass, CNN 2D Feature Map Convolution, Interactive MNIST 99.4% CNN digit recognition.
+  - **Transformers & Modern LLMs:** Transformer Self-Attention Head (Query/Key causal context window, soft-attention matrix, and Softmax Next-Token Probability distribution).
 - **Mobile "Story Mode":** Resolves traditional desktop canvas scaling flaws by offering a dedicated vertical swipe/step card view for smartphones.
 - **Socratic AI Step-Explainer:** Context-aware breakdowns answering *why* state mutated and providing counterfactual algorithmic analysis.
 - **Full Playback Controls:** Play/Pause, single-step navigation, scrubber progress bar, speed toggling ($0.5\times$ to $2\times$), and full keyboard shortcuts (`Space`, `←`, `→`, `Home`, `End`, `R`).

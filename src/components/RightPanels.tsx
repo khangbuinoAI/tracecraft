@@ -55,6 +55,10 @@ export const RightPanels: React.FC<RightPanelsProps> = ({
         return `(${x}, ${y})`;
       });
       onChangeInput(randomPoints.join(', '));
+    } else if (preset.visualType === 'confusion-matrix') {
+      const scenarios = ['scenario=medical', 'scenario=spam', 'scenario=fraud', 'scenario=balanced'];
+      const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      onChangeInput(randomScenario);
     } else {
       const randomArr = Array.from({ length: 5 }, () => Math.floor(Math.random() * 50) + 1);
       onChangeInput(randomArr.join(', '));

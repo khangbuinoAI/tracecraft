@@ -16,6 +16,7 @@ import { MathFormula } from './MathFormula';
 import { getLocalizedText } from '../i18n/translations';
 import { MnistStage } from './MnistStage';
 import { LogisticStage } from './LogisticStage';
+import { ConfusionMatrixStage } from './ConfusionMatrixStage';
 interface VisualStageProps {
   theme: ThemeMode;
   step: TraceStep;
@@ -139,6 +140,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
   const kernelPos = (step.state.kernelPos as { r: number; c: number } | undefined) || { r: 0, c: 0 };
   const mnistState = step.state.mnistState;
   const logisticState = step.state.logisticState;
+  const confusionMatrixState = step.state.confusionMatrixState;
   const smoothKernelR = useSmoothValue(kernelPos.r, 420);
   const smoothKernelC = useSmoothValue(kernelPos.c, 420);
   // Raw values from trace
@@ -244,7 +246,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         {/* Data Controls & Graph Zoom Toolbar */}
         <div className="flex items-center gap-2">
           {/* Data Presets Selector (if Regression) */}
-          {points && !logisticState && onChangeInput && (
+          {points && !logisticState && !confusionMatrixState && onChangeInput && (
             <div className="hidden sm:flex items-center gap-1">
               <Database className="w-3.5 h-3.5 opacity-60" />
               <div
@@ -406,9 +408,22 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         )}
 
         {/* ========================================================= */}
+        {/* 0.5 CONFUSION MATRIX & CLASSIFICATION METRICS             */}
+        {/* ========================================================= */}
+        {confusionMatrixState && (
+          <ConfusionMatrixStage
+            theme={theme}
+            language={language}
+            confusionMatrixState={confusionMatrixState}
+            onChangeInput={onChangeInput}
+            isExpanded={isMaximized}
+          />
+        )}
+
+        {/* ========================================================= */}
         {/* 1. DYNAMIC REGRESSION PLOT (Auto-scaled, Clickable, Clean) */}
         {/* ========================================================= */}
-        {points && points.length > 0 && !logisticState && (
+        {points && points.length > 0 && !logisticState && !confusionMatrixState && (
           <div className="w-full h-full relative flex items-center justify-center">
             {/* Top Click-To-Add-Point Hint */}
             <div className="absolute top-1 left-4 z-10 flex items-center gap-1.5 text-[11px] opacity-60 font-sans pointer-events-none">
@@ -1866,7 +1881,12 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         <span className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>{t.activeInvariantModel}:</span>
-          {logisticState ? (
+          {confusionMatrixState ? (
+            <MathFormula
+              math={`\\text{Accuracy} = ${(confusionMatrixState.accuracy * 100).toFixed(1)}\\%, \\quad F_1 = ${confusionMatrixState.f1Score.toFixed(3)}`}
+              className="ml-1 font-bold text-amber-500 dark:text-cyan-300"
+            />
+          ) : logisticState ? (
             <MathFormula
               math={`P(y=1) = \\sigma(${smoothW.toFixed(2)}x ${smoothB >= 0 ? '+' : ''}${smoothB.toFixed(2)})`}
               className="ml-1 font-bold text-blue-600 dark:text-cyan-300"

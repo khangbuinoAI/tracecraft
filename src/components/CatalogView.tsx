@@ -272,7 +272,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         isSketch ? 'font-sketch text-2xl sm:text-3xl text-[#282828]' : 'text-slate-100'
                       }`}
                     >
-                      {category}
+                      {t.categories[category as AICategory] || category}
                     </h2>
                     <span
                       className={`text-xs font-mono px-2 py-0.5 rounded-full ${

@@ -18,6 +18,7 @@ export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type VisualType =
   | 'regression-plot'
   | 'logistic-regression'
+  | 'confusion-matrix'
   | 'neural-network'
   | 'single-neuron'
   | 'modern-neuron'
@@ -134,6 +135,36 @@ export interface LogisticState {
   gradB?: number;
 }
 
+export type QuadrantType = 'tp' | 'fp' | 'fn' | 'tn';
+
+export interface ConfusionMatrixSample {
+  id: number;
+  prob: number;
+  actual: 0 | 1;
+  pred?: 0 | 1;
+  status?: QuadrantType;
+  label?: string;
+}
+
+export interface ConfusionMatrixData {
+  tp: number;
+  fp: number;
+  fn: number;
+  tn: number;
+  total: number;
+  threshold: number;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  specificity: number;
+  f1Score: number;
+  samples: ConfusionMatrixSample[];
+  scenario: 'medical' | 'spam' | 'fraud' | 'balanced';
+  activeQuadrant?: QuadrantType | null;
+  activeSampleIndex?: number | null;
+  costNote?: string;
+}
+
 export type PrimitiveStateValue =
   | string
   | number
@@ -153,7 +184,9 @@ export type PrimitiveStateValue =
   | { token: string; prob: number }[]
   | MnistState
   | LogisticState
-  | LogisticPoint[];
+  | LogisticPoint[]
+  | ConfusionMatrixData
+  | ConfusionMatrixSample[];
 export interface StepState {
   epoch?: number;
   loss?: number;
@@ -178,6 +211,7 @@ export interface StepState {
   bioNeuronState?: BioNeuronState;
   mnistState?: MnistState;
   logisticState?: LogisticState;
+  confusionMatrixState?: ConfusionMatrixData;
   [key: string]: PrimitiveStateValue;
 }
 

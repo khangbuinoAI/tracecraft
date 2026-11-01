@@ -1,4 +1,4 @@
-import type { AlgorithmPreset, TraceStep, Language, LogisticPoint } from '../types';
+import type { AlgorithmPreset, TraceStep, Language, LogisticPoint, ConfusionMatrixData, ConfusionMatrixSample, QuadrantType } from '../types';
 import { generateCanonicalDigitGrid, inferMnist } from '../components/MnistStage';
 export const ALGORITHM_PRESETS: AlgorithmPreset[] = [
   // ==========================================
@@ -698,6 +698,483 @@ def logistic_regression(X, y, lr=0.15, epochs=7):
         invariant: isVi
           ? '||∇L|| ≈ 0: Ranh giới x* đã phân tách tối ưu không gian đặc trưng giữa hai lớp.'
           : '||∇L|| ≈ 0: Parameter weights have arrived at optimal decision boundary.',
+      });
+
+      const total = steps.length;
+      return steps.map((s, idx) => ({ ...s, step: idx + 1, totalSteps: total }));
+    },
+  },
+  // ==========================================
+  {
+    id: 'confusion-matrix',
+    title: '03. Confusion Matrix & Classification Metrics',
+    category: 'Classical Machine Learning',
+    difficulty: 'Beginner',
+    badge: 'Evaluation Metrics',
+    visualType: 'confusion-matrix',
+    formula: '\\text{Accuracy} = \\frac{TP + TN}{N}, \\quad \\text{Precision} = \\frac{TP}{TP + FP}, \\quad \\text{Recall} = \\frac{TP}{TP + FN}, \\quad F_1 = 2 \\cdot \\frac{\\text{Precision} \\cdot \\text{Recall}}{\\text{Precision} + \\text{Recall}}',
+    summary: 'Deconstructs classification performance into True/False Positives and Negatives, exposing the Accuracy Paradox and navigating the Precision-Recall trade-off across decision thresholds.',
+    description: 'In real-world classification (cancer screening, fraud detection, spam filtering), overall accuracy is often dangerously misleading. The Confusion Matrix is the foundational diagnostic tool that tabulates actual outcomes against model predictions into four quadrants: TP, FP, FN, and TN. Adjusting the probability decision threshold τ trades off False Alarms (Precision) against Missed Detections (Recall), harmonized by the F1-Score.',
+    sections: [
+      {
+        title: '1. The Accuracy Paradox & Class Imbalance',
+        content: 'In high-stakes applications such as cancer screening or financial fraud detection, positive cases are rare (e.g. 5% positive, 95% negative). A naive "dummy" model predicting all samples as negative achieves 95% Accuracy, yet catches zero sick patients and zero fraud cases (0% Recall)! This dangerous illusion is the Accuracy Paradox. Evaluating imbalanced classification tasks requires breaking down errors into True and False detections.',
+        formula: '\\text{Accuracy} = \\frac{TP + TN}{TP + TN + FP + FN}, \\quad \\lim_{\\text{Imbalance} \\to \\infty} \\text{Accuracy} \\approx \\text{Majority Class %}',
+        keyTakeaway: 'Accuracy is blind to error severity and class imbalance. Never evaluate an imbalanced model on accuracy alone.',
+      },
+      {
+        title: '2. The 2×2 Confusion Matrix & Type I / Type II Errors',
+        content: 'The Confusion Matrix cross-tabulates Actual classes (rows) against Predicted classes (columns) into 4 distinct quadrants: True Positive (TP - hit), False Positive (FP - Type I Error, false alarm), False Negative (FN - Type II Error, missed detection), and True Negative (TN - correct rejection). In the real world, the cost of Type I and Type II errors is asymmetric: sending an email to spam (FP) is an inconvenience, but missing malignant cancer (FN) is catastrophic.',
+        formula: '\\begin{pmatrix} TP & FN \\\\ FP & TN \\end{pmatrix}, \\quad \\text{Type I Error} = FP, \\quad \\text{Type II Error} = FN',
+        keyTakeaway: 'The cost of a False Negative (missed cancer) is often radically higher than a False Positive (extra biopsy).',
+      },
+      {
+        title: '3. Precision, Recall, Specificity & The Harmonic F1-Score',
+        content: 'Precision (TP / (TP + FP)) answers: "When the model sounds the alarm, how often is it right?" Recall or Sensitivity (TP / (TP + FN)) answers: "Out of all actual positive cases, how many did the model catch?" Specificity (TN / (TN + FP)) measures true negative clearance. The F1-Score is the harmonic mean of Precision and Recall. Unlike the arithmetic mean, the harmonic mean severely penalizes extreme disparities (e.g. 100% precision with 0% recall collapses F1 to 0).',
+        formula: 'F_1 = \\frac{2}{\\frac{1}{\\text{Precision}} + \\frac{1}{\\text{Recall}}} = 2 \\cdot \\frac{\\text{Precision} \\cdot \\text{Recall}}{\\text{Precision} + \\text{Recall}} = \\frac{2TP}{2TP + FP + FN}',
+        keyTakeaway: 'The F1-Score delivers a balanced, unified benchmark when you need both high precision and high recall.',
+      },
+      {
+        title: '4. Decision Threshold Tuning & The Precision-Recall Trade-off',
+        content: 'Binary classifiers compute a continuous posterior probability P(y=1|x) in [0, 1]. Samples are labeled positive if P >= τ, where τ is the decision threshold. Lowering τ (e.g. τ = 0.30) makes the model aggressive, increasing Recall (fewer missed positives) at the expense of more False Positives. Raising τ (e.g. τ = 0.70) makes the model conservative, maximizing Precision at the cost of missing borderline cases.',
+        formula: '\\hat{y}_i = \\begin{cases} 1 & \\text{if } P(y_i=1) \\ge \\tau \\\\ 0 & \\text{if } P(y_i=1) < \\tau \\end{cases}, \\quad \\tau \\in (0, 1)',
+        keyTakeaway: 'Threshold τ is an active engineering hyperparameter tuned to match the operational and ethical costs of each specific domain.',
+      },
+    ],
+    timeComplexity: 'O(N)',
+    spaceComplexity: 'O(1) matrix',
+    tags: ['Supervised', 'Classification', 'Confusion Matrix', 'Precision', 'Recall', 'F1-Score', 'Accuracy Paradox', 'NumPy'],
+    defaultInput: 'scenario=medical, threshold=0.50',
+    inputVariants: [
+      { label: 'Medical (Cancer Screening)', value: 'scenario=medical, threshold=0.50' },
+      { label: 'Spam Filter (Urgent Mail)', value: 'scenario=spam, threshold=0.50' },
+      { label: 'Credit Fraud (Imbalance)', value: 'scenario=fraud, threshold=0.50' },
+      { label: 'Balanced Baseline', value: 'scenario=balanced, threshold=0.50' },
+    ],
+    vi: {
+      title: '03. Ma trận Nhầm lẫn & Chỉ số Đánh giá Phân loại',
+      category: 'Machine Learning Cổ điển',
+      badge: 'Chỉ số Đánh giá',
+      summary: 'Phân rã hiệu năng phân loại thành Dương/Âm tính Thật và Giả, bóc trần Nghịch lý Độ chính xác và tối ưu hóa thỏa hiệp giữa Precision và Recall qua các ngưỡng quyết định.',
+      description: 'Trong các bài toán phân loại thực tế (sàng lọc ung thư, phát hiện gian lận ngân hàng, lọc thư rác), tỷ lệ Accuracy tổng thể rất dễ gây hiểu lầm tai hại. Ma trận Nhầm lẫn (Confusion Matrix) là công cụ chẩn đoán cốt lõi lập bảng so sánh giữa nhãn thực tế và nhãn dự đoán thành 4 góc phần tư: TP, FP, FN, TN. Thay đổi ngưỡng quyết định xác suất τ cho phép ta chủ động đánh đổi giữa Báo động nhầm (Precision) và Bỏ sót ca bệnh (Recall), được cân bằng thông qua chỉ số F1-Score.',
+      variants: [
+        { label: 'Y tế (Sàng lọc Ung thư)', value: 'scenario=medical, threshold=0.50' },
+        { label: 'Lọc Thư rác (Spam Filter)', value: 'scenario=spam, threshold=0.50' },
+        { label: 'Gian lận Thẻ (Mất cân bằng)', value: 'scenario=fraud, threshold=0.50' },
+        { label: 'Dữ liệu Cân bằng', value: 'scenario=balanced, threshold=0.50' },
+      ],
+      sections: [
+        {
+          title: '1. Nghịch lý Độ chính xác (Accuracy Paradox) & Dữ liệu Mất cân bằng',
+          content: 'Trong các ứng dụng y tế nguy cấp hoặc phát hiện gian lận tài chính, số lượng mẫu dương tính thường rất hiếm (ví dụ 5% bệnh nhân có khối u, 95% khỏe mạnh). Một mô hình ngây thơ luôn luôn đoán Âm tính (khỏe mạnh) sẽ đạt Độ chính xác lên tới 95%, nhưng hoàn toàn bỏ sót 100% bệnh nhân ung thư (Recall = 0%)! Đây chính là Nghịch lý Độ chính xác (Accuracy Paradox). Để đánh giá đúng, ta bắt buộc phải phân tách chi tiết từng loại sai số.',
+          formula: '\\text{Accuracy} = \\frac{TP + TN}{TP + TN + FP + FN}, \\quad \\lim_{\\text{Imbalance} \\to \\infty} \\text{Accuracy} \\approx \\text{Tỷ lệ Lớp Đa số}',
+          keyTakeaway: 'Accuracy không phân biệt được mức độ nghiêm trọng giữa các loại lỗi; không bao giờ dùng Accuracy làm chỉ số duy nhất trên dữ liệu mất cân bằng.',
+        },
+        {
+          title: '2. Ma trận 2×2 & Sai lầm Loại I (FP) vs Sai lầm Loại II (FN)',
+          content: 'Ma trận Nhầm lẫn đối chiếu Nhãn thực tế (dòng) với Nhãn dự đoán (cột) thành 4 góc phần tư rõ ràng: Dương tính Thật (TP - bắt trúng), Dương tính Giả (FP - Sai lầm loại I, báo động nhầm), Âm tính Giả (FN - Sai lầm loại II, bỏ sót ca bệnh), và Âm tính Thật (TN - loại trừ đúng). Trong đời thực, cái giá của sai lầm loại I và loại II không bao giờ bằng nhau: phân loại nhầm thư thành spam (FP) chỉ gây bất tiện, nhưng bỏ sót khối u ác tính (FN) có thể cướp đi sinh mạng.',
+          formula: '\\begin{pmatrix} TP & FN \\\\ FP & TN \\end{pmatrix}, \\quad \\text{Sai lầm Loại I} = FP, \\quad \\text{Sai lầm Loại II} = FN',
+          keyTakeaway: 'Hậu quả của Âm tính Giả (FN - bỏ sót bệnh) nguy hiểm gấp nhiều lần Dương tính Giả (FP - xét nghiệm bổ sung).',
+        },
+        {
+          title: '3. Precision, Recall, Specificity & Điểm F1-Score Điều hòa',
+          content: 'Precision (TP / (TP + FP)) trả lời: "Khi mô hình báo động, tỷ lệ thật sự đúng là bao nhiêu?" Recall hay Sensitivity (TP / (TP + FN)) trả lời: "Trong toàn bộ các ca bệnh thật sự, mô hình bắt được bao nhiêu ca?" Specificity (TN / (TN + FP)) đo lường khả năng miễn trừ người khỏe mạnh. Điểm F1-Score là trung bình điều hòa giữa Precision và Recall. Khác với trung bình cộng, trung bình điều hòa phạt cực nặng khi một trong hai chỉ số bị lệch (Precision 100% nhưng Recall 0% khiến F1 rơi thẳng về 0).',
+          formula: 'F_1 = \\frac{2}{\\frac{1}{\\text{Precision}} + \\frac{1}{\\text{Recall}}} = 2 \\cdot \\frac{\\text{Precision} \\cdot \\text{Recall}}{\\text{Precision} + \\text{Recall}} = \\frac{2TP}{2TP + FP + FN}',
+          keyTakeaway: 'F1-Score là thước đo chuẩn xác nhất khi bài toán đòi hỏi sự cân bằng đồng thời giữa Precision cao và Recall cao.',
+        },
+        {
+          title: '4. Điều chỉnh Ngưỡng Quyết định τ & Đánh đổi Precision - Recall',
+          content: 'Mô hình phân loại đưa ra xác suất liên tục P(y=1|x) thuộc [0, 1]. Mẫu được gán nhãn Dương tính nếu P >= τ. Hạ ngưỡng τ (ví dụ τ = 0.30) khiến mô hình nhạy bén hơn, tối đa hóa Recall (hạn chế tối đa bỏ sót ca bệnh) nhưng phải chấp nhận thêm nhiều cảnh báo giả. Tăng ngưỡng τ (ví dụ τ = 0.70) khiến mô hình thận trọng hơn, tối đa hóa Precision (chỉ báo động khi chắc chắn) nhưng dễ bỏ sót ca ở vùng ranh giới.',
+          formula: '\\hat{y}_i = \\begin{cases} 1 & \\text{nếu } P(y_i=1) \\ge \\tau \\\\ 0 & \\text{nếu } P(y_i=1) < \\tau \\end{cases}, \\quad \\tau \\in (0, 1)',
+          keyTakeaway: 'Ngưỡng τ không bất di bất dịch ở 0.5; kỹ sư AI luôn tinh chỉnh τ dựa trên hàm chi phí và rủi ro thực tế của từng nghiệp vụ.',
+        },
+      ],
+    },
+    pythonCode: `import numpy as np
+
+def compute_confusion_matrix(y_true, y_prob, threshold=0.5):
+    """
+    Calculates Confusion Matrix and diagnostic metrics from scratch.
+    """
+    y_true = np.asarray(y_true)
+    y_prob = np.asarray(y_prob)
+    
+    # 1. Apply decision threshold tau to obtain binary predictions
+    y_pred = (y_prob >= threshold).astype(int)
+    
+    # 2. Compute the 4 quadrants
+    tp = np.sum((y_true == 1) & (y_pred == 1))
+    fp = np.sum((y_true == 0) & (y_pred == 1))
+    fn = np.sum((y_true == 1) & (y_pred == 0))
+    tn = np.sum((y_true == 0) & (y_pred == 0))
+    
+    # 3. Derive key metrics
+    total = len(y_true)
+    accuracy = (tp + tn) / total if total > 0 else 0.0
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+    
+    return {
+        "matrix": np.array([[tp, fn], [fp, tn]]),
+        "TP": int(tp), "FP": int(fp), "FN": int(fn), "TN": int(tn),
+        "accuracy": accuracy, "precision": precision,
+        "recall": recall, "specificity": specificity, "f1": f1
+    }`,
+    code: `import numpy as np
+
+def evaluate_classification(y_true, y_prob, threshold=0.5):
+    # 1. Decision thresholding: y_pred in {0, 1}
+    y_pred = (y_prob >= threshold).astype(int)
+    
+    # 2. Compute the 4 quadrants of the Confusion Matrix
+    tp = np.sum((y_true == 1) & (y_pred == 1)) # Hit
+    fp = np.sum((y_true == 0) & (y_pred == 1)) # Type I Error
+    fn = np.sum((y_true == 1) & (y_pred == 0)) # Type II Error
+    tn = np.sum((y_true == 0) & (y_pred == 0)) # Correct Rejection
+    
+    # 3. Derive key diagnostic metrics
+    accuracy = (tp + tn) / len(y_true)
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    f1 = 2 * (precision * recall) / (precision + recall)
+    return {"TP": tp, "FP": fp, "FN": fn, "TN": tn, "F1": f1}`,
+    generateTraces: (inputStr?: string, lang: Language = 'en'): TraceStep[] => {
+      const isVi = lang === 'vi';
+      let scenario: 'medical' | 'spam' | 'fraud' | 'balanced' = 'medical';
+      let threshold = 0.5;
+
+      if (inputStr) {
+        const lower = inputStr.toLowerCase();
+        if (lower.includes('spam')) scenario = 'spam';
+        else if (lower.includes('fraud')) scenario = 'fraud';
+        else if (lower.includes('balanced')) scenario = 'balanced';
+        else if (lower.includes('medical')) scenario = 'medical';
+
+        const threshMatch = inputStr.match(/threshold\s*=\s*([0-9.]+)/i);
+        if (threshMatch) {
+          const val = parseFloat(threshMatch[1]);
+          if (!isNaN(val) && val >= 0.05 && val <= 0.95) {
+            threshold = val;
+          }
+        }
+      }
+
+      // Generate realistic dataset samples based on scenario
+      let baseSamples: { id: number; prob: number; actual: 0 | 1; label: string }[] = [];
+      if (scenario === 'medical') {
+        baseSamples = [
+          { id: 1, prob: 0.95, actual: 1, label: isVi ? 'Khối u ác tính #1' : 'Malignant Tumor #1' },
+          { id: 2, prob: 0.89, actual: 1, label: isVi ? 'Khối u ác tính #2' : 'Malignant Tumor #2' },
+          { id: 3, prob: 0.84, actual: 1, label: isVi ? 'Khối u ác tính #3' : 'Malignant Tumor #3' },
+          { id: 4, prob: 0.78, actual: 1, label: isVi ? 'Khối u ác tính #4' : 'Malignant Tumor #4' },
+          { id: 5, prob: 0.72, actual: 1, label: isVi ? 'Khối u ác tính #5' : 'Malignant Tumor #5' },
+          { id: 6, prob: 0.64, actual: 1, label: isVi ? 'Khối u ác tính #6' : 'Malignant Tumor #6' },
+          { id: 7, prob: 0.55, actual: 1, label: isVi ? 'Khối u ác tính #7' : 'Malignant Tumor #7' },
+          { id: 8, prob: 0.42, actual: 1, label: isVi ? 'Khối u ác tính #8 (Vùng mờ)' : 'Malignant Tumor #8 (Borderline)' },
+          { id: 9, prob: 0.68, actual: 0, label: isVi ? 'U lành tính #9 (Cảnh báo nhầm)' : 'Benign Cell #9 (Inflamed)' },
+          { id: 10, prob: 0.58, actual: 0, label: isVi ? 'U lành tính #10' : 'Benign Cell #10' },
+          { id: 11, prob: 0.51, actual: 0, label: isVi ? 'U lành tính #11' : 'Benign Cell #11' },
+          { id: 12, prob: 0.46, actual: 0, label: isVi ? 'Mô khỏe mạnh #12' : 'Healthy Tissue #12' },
+          { id: 13, prob: 0.39, actual: 0, label: isVi ? 'Mô khỏe mạnh #13' : 'Healthy Tissue #13' },
+          { id: 14, prob: 0.33, actual: 0, label: isVi ? 'Mô khỏe mạnh #14' : 'Healthy Tissue #14' },
+          { id: 15, prob: 0.27, actual: 0, label: isVi ? 'Mô khỏe mạnh #15' : 'Healthy Tissue #15' },
+          { id: 16, prob: 0.21, actual: 0, label: isVi ? 'Mô khỏe mạnh #16' : 'Healthy Tissue #16' },
+          { id: 17, prob: 0.16, actual: 0, label: isVi ? 'Mô khỏe mạnh #17' : 'Healthy Tissue #17' },
+          { id: 18, prob: 0.11, actual: 0, label: isVi ? 'Mô khỏe mạnh #18' : 'Healthy Tissue #18' },
+          { id: 19, prob: 0.07, actual: 0, label: isVi ? 'Mô khỏe mạnh #19' : 'Healthy Tissue #19' },
+          { id: 20, prob: 0.03, actual: 0, label: isVi ? 'Mô khỏe mạnh #20' : 'Healthy Tissue #20' },
+        ];
+      } else if (scenario === 'spam') {
+        baseSamples = [
+          { id: 1, prob: 0.98, actual: 1, label: isVi ? 'Lừa đảo trúng thưởng #1' : 'Phishing Lottery #1' },
+          { id: 2, prob: 0.92, actual: 1, label: isVi ? 'Quảng cáo mua bán #2' : 'Spam Marketing #2' },
+          { id: 3, prob: 0.87, actual: 1, label: isVi ? 'Spam bán hàng #3' : 'Spam Promo #3' },
+          { id: 4, prob: 0.81, actual: 1, label: isVi ? 'Link độc hại #4' : 'Malicious Link #4' },
+          { id: 5, prob: 0.74, actual: 1, label: isVi ? 'Spam tài chính #5' : 'Loan Spam #5' },
+          { id: 6, prob: 0.67, actual: 1, label: isVi ? 'Bản tin spam #6' : 'Unsubscribed Blast #6' },
+          { id: 7, prob: 0.59, actual: 1, label: isVi ? 'Spam khảo sát #7' : 'Survey Spam #7' },
+          { id: 8, prob: 0.44, actual: 1, label: isVi ? 'Spam tinh vi #8' : 'Sneaky Spam #8' },
+          { id: 9, prob: 0.76, actual: 0, label: isVi ? 'Hợp đồng đối tác #9 (Bị dính từ khóa)' : 'Client Contract #9 (Keyword Alert)' },
+          { id: 10, prob: 0.66, actual: 0, label: isVi ? 'Thư mời phỏng vấn #10' : 'Job Interview Offer #10' },
+          { id: 11, prob: 0.54, actual: 0, label: isVi ? 'Hóa đơn ngân hàng #11' : 'Bank Statement #11' },
+          { id: 12, prob: 0.45, actual: 0, label: isVi ? 'Email dự án #12' : 'Project Update #12' },
+          { id: 13, prob: 0.38, actual: 0, label: isVi ? 'Thư nội bộ #13' : 'Internal Memo #13' },
+          { id: 14, prob: 0.30, actual: 0, label: isVi ? 'Báo cáo tuần #14' : 'Weekly Status #14' },
+          { id: 15, prob: 0.23, actual: 0, label: isVi ? 'Email khách hàng #15' : 'Customer Query #15' },
+          { id: 16, prob: 0.17, actual: 0, label: isVi ? 'Thư cá nhân #16' : 'Personal Mail #16' },
+          { id: 17, prob: 0.12, actual: 0, label: isVi ? 'Email trao đổi #17' : 'Casual Thread #17' },
+          { id: 18, prob: 0.08, actual: 0, label: isVi ? 'Biên nhận #18' : 'Receipt Confirmation #18' },
+          { id: 19, prob: 0.04, actual: 0, label: isVi ? 'Xác thực tài khoản #19' : '2FA Code #19' },
+          { id: 20, prob: 0.02, actual: 0, label: isVi ? 'Thông báo hệ thống #20' : 'System Alert #20' },
+        ];
+      } else if (scenario === 'fraud') {
+        baseSamples = [
+          { id: 1, prob: 0.96, actual: 1, label: isVi ? 'Rút tiền bất thường lúc 3h #1' : 'Abnormal 3AM Withdrawal #1' },
+          { id: 2, prob: 0.88, actual: 1, label: isVi ? 'Thẻ quẹt tại nước ngoài #2' : 'Foreign IP Transaction #2' },
+          { id: 3, prob: 0.48, actual: 1, label: isVi ? 'Giao dịch vi mô thử thẻ #3' : 'Micro-probe Charge #3' },
+          { id: 4, prob: 0.65, actual: 0, label: isVi ? 'Mua sắm lớn mua TV #4' : 'Large Electronics Buy #4' },
+          { id: 5, prob: 0.52, actual: 0, label: isVi ? 'Giao dịch du lịch #5' : 'Travel Hotel Booking #5' },
+          { id: 6, prob: 0.43, actual: 0, label: isVi ? 'Thanh toán ăn uống #6' : 'Dining POS #6' },
+          { id: 7, prob: 0.37, actual: 0, label: isVi ? 'Mua đồ tạp hóa #7' : 'Grocery Store #7' },
+          { id: 8, prob: 0.31, actual: 0, label: isVi ? 'Đổ xăng #8' : 'Gas Station #8' },
+          { id: 9, prob: 0.25, actual: 0, label: isVi ? 'Cà phê sáng #9' : 'Coffee Shop #9' },
+          { id: 10, prob: 0.20, actual: 0, label: isVi ? 'Tiền điện nước #10' : 'Utility Bill #10' },
+          { id: 11, prob: 0.16, actual: 0, label: isVi ? 'Thuê bao xem phim #11' : 'Streaming Sub #11' },
+          { id: 12, prob: 0.13, actual: 0, label: isVi ? 'Vé tàu xe #12' : 'Transit Ticket #12' },
+          { id: 13, prob: 0.10, actual: 0, label: isVi ? 'Nhà thuốc #13' : 'Pharmacy #13' },
+          { id: 14, prob: 0.08, actual: 0, label: isVi ? 'Nạp tiền điện thoại #14' : 'Mobile Topup #14' },
+          { id: 15, prob: 0.06, actual: 0, label: isVi ? 'Siêu thị mini #15' : 'Convenience Store #15' },
+          { id: 16, prob: 0.05, actual: 0, label: isVi ? 'Mua sách #16' : 'Bookstore #16' },
+          { id: 17, prob: 0.04, actual: 0, label: isVi ? 'Tiệm bánh #17' : 'Bakery #17' },
+          { id: 18, prob: 0.03, actual: 0, label: isVi ? 'Rửa xe #18' : 'Car Wash #18' },
+          { id: 19, prob: 0.02, actual: 0, label: isVi ? 'Tiền gửi xe #19' : 'Parking Fee #19' },
+          { id: 20, prob: 0.01, actual: 0, label: isVi ? 'Vé xem phim #20' : 'Cinema Ticket #20' },
+        ];
+      } else {
+        baseSamples = [
+          { id: 1, prob: 0.94, actual: 1, label: isVi ? 'Mẫu #1' : 'Sample #1' },
+          { id: 2, prob: 0.88, actual: 1, label: isVi ? 'Mẫu #2' : 'Sample #2' },
+          { id: 3, prob: 0.81, actual: 1, label: isVi ? 'Mẫu #3' : 'Sample #3' },
+          { id: 4, prob: 0.76, actual: 1, label: isVi ? 'Mẫu #4' : 'Sample #4' },
+          { id: 5, prob: 0.70, actual: 1, label: isVi ? 'Mẫu #5' : 'Sample #5' },
+          { id: 6, prob: 0.65, actual: 1, label: isVi ? 'Mẫu #6' : 'Sample #6' },
+          { id: 7, prob: 0.58, actual: 1, label: isVi ? 'Mẫu #7' : 'Sample #7' },
+          { id: 8, prob: 0.53, actual: 1, label: isVi ? 'Mẫu #8' : 'Sample #8' },
+          { id: 9, prob: 0.44, actual: 1, label: isVi ? 'Mẫu #9' : 'Sample #9' },
+          { id: 10, prob: 0.36, actual: 1, label: isVi ? 'Mẫu #10' : 'Sample #10' },
+          { id: 11, prob: 0.66, actual: 0, label: isVi ? 'Mẫu #11' : 'Sample #11' },
+          { id: 12, prob: 0.59, actual: 0, label: isVi ? 'Mẫu #12' : 'Sample #12' },
+          { id: 13, prob: 0.52, actual: 0, label: isVi ? 'Mẫu #13' : 'Sample #13' },
+          { id: 14, prob: 0.45, actual: 0, label: isVi ? 'Mẫu #14' : 'Sample #14' },
+          { id: 15, prob: 0.38, actual: 0, label: isVi ? 'Mẫu #15' : 'Sample #15' },
+          { id: 16, prob: 0.31, actual: 0, label: isVi ? 'Mẫu #16' : 'Sample #16' },
+          { id: 17, prob: 0.24, actual: 0, label: isVi ? 'Mẫu #17' : 'Sample #17' },
+          { id: 18, prob: 0.17, actual: 0, label: isVi ? 'Mẫu #18' : 'Sample #18' },
+          { id: 19, prob: 0.11, actual: 0, label: isVi ? 'Mẫu #19' : 'Sample #19' },
+          { id: 20, prob: 0.04, actual: 0, label: isVi ? 'Mẫu #20' : 'Sample #20' },
+        ];
+      }
+
+      // Helper to compute matrix data at a given threshold
+      const evaluateMatrix = (thresh: number, activeQuad: QuadrantType | null = null): ConfusionMatrixData => {
+        let tp = 0;
+        let fp = 0;
+        let fn = 0;
+        let tn = 0;
+
+        const evaluated: ConfusionMatrixSample[] = baseSamples.map((s) => {
+          const pred: 0 | 1 = s.prob >= thresh ? 1 : 0;
+          let status: QuadrantType;
+          if (s.actual === 1 && pred === 1) {
+            status = 'tp';
+            tp++;
+          } else if (s.actual === 0 && pred === 1) {
+            status = 'fp';
+            fp++;
+          } else if (s.actual === 1 && pred === 0) {
+            status = 'fn';
+            fn++;
+          } else {
+            status = 'tn';
+            tn++;
+          }
+          return { ...s, pred, status };
+        });
+
+        const total = evaluated.length;
+        const accuracy = total > 0 ? (tp + tn) / total : 0;
+        const precision = tp + fp > 0 ? tp / (tp + fp) : 0;
+        const recall = tp + fn > 0 ? tp / (tp + fn) : 0;
+        const specificity = tn + fp > 0 ? tn / (tn + fp) : 0;
+        const f1Score = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
+
+        return {
+          tp,
+          fp,
+          fn,
+          tn,
+          total,
+          threshold: thresh,
+          accuracy,
+          precision,
+          recall,
+          specificity,
+          f1Score,
+          samples: evaluated,
+          scenario,
+          activeQuadrant: activeQuad,
+        };
+      };
+
+      const initialData = evaluateMatrix(threshold);
+      const steps: TraceStep[] = [];
+
+      // STEP 1: INIT & GROUND TRUTH
+      steps.push({
+        step: 1,
+        totalSteps: 8,
+        line: 3,
+        action: 'init',
+        targets: [0],
+        state: {
+          confusionMatrixState: initialData,
+          threshold,
+          totalSamples: initialData.total,
+        },
+        explanation: isVi
+          ? `[Khởi tạo Dữ liệu]: Nạp ${initialData.total} mẫu thực tế trong kịch bản "${scenario.toUpperCase()}". Đã có ${baseSamples.filter((s) => s.actual === 1).length} ca Dương tính (y=1) và ${baseSamples.filter((s) => s.actual === 0).length} ca Âm tính (y=0).`
+          : `[Data Initialization]: Loaded ${initialData.total} ground truth samples for the "${scenario.toUpperCase()}" scenario (${baseSamples.filter((s) => s.actual === 1).length} positive, ${baseSamples.filter((s) => s.actual === 0).length} negative).`,
+        invariant: isVi
+          ? 'Tập dữ liệu phản ánh phân phối thực tế của bài toán phân loại.'
+          : 'Dataset reflects authentic class distribution of the operational domain.',
+      });
+
+      // STEP 2: THRESHOLDING RULE
+      steps.push({
+        step: 2,
+        totalSteps: 8,
+        line: 5,
+        action: 'forward',
+        targets: [1],
+        state: {
+          confusionMatrixState: initialData,
+          threshold,
+        },
+        explanation: isVi
+          ? `[Ngưỡng Quyết định τ = ${threshold.toFixed(2)}]: Mô hình gán nhãn ŷ = 1 cho các mẫu có xác suất P(y=1) ≥ ${threshold.toFixed(2)}, ngược lại gán nhãn ŷ = 0. Đường ranh giới chia không gian thành 2 vùng rõ rệt.`
+          : `[Decision Threshold τ = ${threshold.toFixed(2)}]: The model classifies samples with P(y=1) >= ${threshold.toFixed(2)} as positive (ŷ=1), and all others as negative (ŷ=0).`,
+        invariant: isVi
+          ? `Quy tắc quyết định: ŷ_i = (p_i ≥ ${threshold.toFixed(2)}) ? 1 : 0.`
+          : `Decision rule: ŷ_i = (p_i >= ${threshold.toFixed(2)}) ? 1 : 0.`,
+      });
+
+      // STEP 3: COUNT TRUE POSITIVES (TP)
+      const tpData = evaluateMatrix(threshold, 'tp');
+      steps.push({
+        step: 3,
+        totalSteps: 8,
+        line: 8,
+        action: 'compute',
+        targets: [2],
+        state: {
+          confusionMatrixState: tpData,
+          tp: tpData.tp,
+        },
+        explanation: isVi
+          ? `[Dương tính Thật (TP)]: Phát hiện đúng ${tpData.tp} trường hợp (Thực tế y=1 VÀ Dự đoán ŷ=1). Đây là các ca "bắt trúng đích" mang lại giá trị cao nhất cho hệ thống.`
+          : `[True Positives (TP)]: Identified ${tpData.tp} correct positive detections (Actual y=1 AND Predicted ŷ=1). These are the successful "hits".`,
+        invariant: isVi
+          ? `TP = ${tpData.tp}: Đại diện cho số lượng ca bệnh / ca gian lận đã được phát hiện thành công.`
+          : `TP = ${tpData.tp}: True hits where ground truth positive is correctly captured.`,
+      });
+
+      // STEP 4: COUNT FALSE POSITIVES (FP - Type I Error)
+      const fpData = evaluateMatrix(threshold, 'fp');
+      steps.push({
+        step: 4,
+        totalSteps: 8,
+        line: 9,
+        action: 'compute',
+        targets: [3],
+        state: {
+          confusionMatrixState: fpData,
+          fp: fpData.fp,
+        },
+        explanation: isVi
+          ? `[Dương tính Giả (FP - Sai lầm loại I)]: Có ${fpData.fp} trường hợp báo động nhầm (Thực tế y=0 nhưng Dự đoán ŷ=1). Làm phiền người dùng hoặc tốn chi phí xét nghiệm lại.`
+          : `[False Positives (FP - Type I Error)]: Model generated ${fpData.fp} false alarms (Actual y=0 but Predicted ŷ=1), requiring secondary verification.`,
+        invariant: isVi
+          ? `FP = ${fpData.fp}: Đo lường mức độ báo động giả. Precision giảm khi FP tăng.`
+          : `FP = ${fpData.fp}: False alarm rate directly degrades model Precision.`,
+      });
+
+      // STEP 5: COUNT FALSE NEGATIVES (FN - Type II Error)
+      const fnData = evaluateMatrix(threshold, 'fn');
+      steps.push({
+        step: 5,
+        totalSteps: 8,
+        line: 10,
+        action: 'compute',
+        targets: [4],
+        state: {
+          confusionMatrixState: fnData,
+          fn: fnData.fn,
+        },
+        explanation: isVi
+          ? `[Âm tính Giả (FN - Sai lầm loại II)]: Bỏ sót nguy hiểm ${fnData.fn} trường hợp (Thực tế y=1 nhưng Dự đoán ŷ=0). Trong y tế, đây là bệnh nhân ung thư bị chẩn đoán nhầm là khỏe mạnh!`
+          : `[False Negatives (FN - Type II Error)]: Missed ${fnData.fn} critical positive cases (Actual y=1 but Predicted ŷ=0). In medicine, this sends an untreated cancer patient home!`,
+        invariant: isVi
+          ? `FN = ${fnData.fn}: Sai số nguy hiểm nhất trong chẩn đoán y tế. Recall giảm khi FN tăng.`
+          : `FN = ${fnData.fn}: Missed detection risk directly degrades model Recall.`,
+      });
+
+      // STEP 6: COUNT TRUE NEGATIVES (TN)
+      const tnData = evaluateMatrix(threshold, 'tn');
+      steps.push({
+        step: 6,
+        totalSteps: 8,
+        line: 11,
+        action: 'compute',
+        targets: [5],
+        state: {
+          confusionMatrixState: tnData,
+          tn: tnData.tn,
+        },
+        explanation: isVi
+          ? `[Âm tính Thật (TN)]: Xác nhận loại trừ chính xác ${tnData.tn} trường hợp (Thực tế y=0 VÀ Dự đoán ŷ=0). Người khỏe mạnh được yên tâm, giao dịch bình thường được thông suốt.`
+          : `[True Negatives (TN)]: Correctly rejected ${tnData.tn} negative samples (Actual y=0 AND Predicted ŷ=0), allowing routine operations to proceed safely.`,
+        invariant: isVi
+          ? `TN = ${tnData.tn}: Phản ánh độ đặc hiệu (Specificity = ${(tnData.specificity * 100).toFixed(1)}%).`
+          : `TN = ${tnData.tn}: Correct clearance reflecting Specificity = ${(tnData.specificity * 100).toFixed(1)}%.`,
+      });
+
+      // STEP 7: THRESHOLD SHIFT & TRADE-OFF SIMULATION
+      const tunedThreshold = scenario === 'medical' ? 0.3 : 0.7;
+      const tunedData = evaluateMatrix(tunedThreshold, null);
+      steps.push({
+        step: 7,
+        totalSteps: 8,
+        line: 5,
+        action: 'update',
+        targets: [1, 4],
+        state: {
+          confusionMatrixState: tunedData,
+          threshold: tunedThreshold,
+        },
+        explanation: isVi
+          ? scenario === 'medical'
+            ? `[Thỏa hiệp Precision - Recall]: Hạ ngưỡng τ xuống 0.30 giúp giảm Âm tính giả FN từ ${initialData.fn} xuống còn ${tunedData.fn}, đẩy Recall tăng vọt lên ${(tunedData.recall * 100).toFixed(1)}%! Bệnh nhân được cứu sống dù phải chấp nhận thêm vài ca cảnh báo nhầm FP.`
+            : `[Thỏa hiệp Precision - Recall]: Tăng ngưỡng τ lên 0.70 giúp giảm Dương tính giả FP từ ${initialData.fp} xuống còn ${tunedData.fp}, đẩy Precision tăng lên ${(tunedData.precision * 100).toFixed(1)}%! Hạn chế tối đa việc xóa nhầm thư quan trọng.`
+          : scenario === 'medical'
+          ? `[Precision-Recall Trade-off]: Lowering threshold to τ = 0.30 slashes False Negatives from ${initialData.fn} down to ${tunedData.fn}, driving Recall up to ${(tunedData.recall * 100).toFixed(1)}%! We prioritize saving lives.`
+          : `[Precision-Recall Trade-off]: Raising threshold to τ = 0.70 slashes False Positives from ${initialData.fp} down to ${tunedData.fp}, boosting Precision to ${(tunedData.precision * 100).toFixed(1)}%! Urgent emails are protected.`,
+        invariant: isVi
+          ? 'Ngưỡng τ điều khiển con lắc giữa Độ chuẩn xác (Precision) và Độ bao phủ (Recall).'
+          : 'Threshold τ calibrates the fundamental trade-off between Precision and Recall.',
+      });
+
+      // STEP 8: FINAL METRIC SYNTHESIS & HARMONIC F1
+      steps.push({
+        step: 8,
+        totalSteps: 8,
+        line: 17,
+        action: 'done',
+        targets: [0, 1, 2, 3, 4, 5],
+        state: {
+          confusionMatrixState: initialData,
+          accuracy: initialData.accuracy,
+          precision: initialData.precision,
+          recall: initialData.recall,
+          f1Score: initialData.f1Score,
+        },
+        explanation: isVi
+          ? `[Tổng kết Chỉ số Toàn diện]: Accuracy = ${(initialData.accuracy * 100).toFixed(1)}%, Precision = ${(initialData.precision * 100).toFixed(1)}%, Recall = ${(initialData.recall * 100).toFixed(1)}%, Điểm F1 = ${initialData.f1Score.toFixed(3)}. Bạn có thể tự do kéo thanh trượt Ngưỡng τ trên đồ thị để kiểm chứng sự thay đổi tức thì!`
+          : `[Full Metric Synthesis]: Accuracy = ${(initialData.accuracy * 100).toFixed(1)}%, Precision = ${(initialData.precision * 100).toFixed(1)}%, Recall = ${(initialData.recall * 100).toFixed(1)}%, F1-Score = ${initialData.f1Score.toFixed(3)}. You can drag the interactive Threshold slider to see real-time recalculations!`,
+        invariant: isVi
+          ? `F1 = 2·(P·R)/(P+R) = ${initialData.f1Score.toFixed(3)}: Trung bình điều hòa cân bằng hoàn hảo giữa Precision và Recall.`
+          : `F1 = 2·(P·R)/(P+R) = ${initialData.f1Score.toFixed(3)}: Harmonic mean harmonizing Precision and Recall.`,
       });
 
       const total = steps.length;
