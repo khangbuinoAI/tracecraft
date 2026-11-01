@@ -17,6 +17,7 @@ import { MnistStage } from './MnistStage';
 import { LogisticStage } from './LogisticStage';
 import { ConfusionMatrixStage } from './ConfusionMatrixStage';
 import { KMeansStage } from './KMeansStage';
+import { MomentumStage } from './MomentumStage';
 import { LessonControlHeader } from './LessonControlHeader';
 import { ALGORITHM_PRESETS } from '../algorithms/presets';
 interface VisualStageProps {
@@ -142,11 +143,13 @@ export const VisualStage: React.FC<VisualStageProps> = ({
   const logisticState = step.state.logisticState;
   const confusionMatrixState = step.state.confusionMatrixState;
   const kmeansState = step.state.kmeansState;
+  const momentumState = step.state.momentumState;
   const smoothKernelR = useSmoothValue(kernelPos.r, 420);
   const currentPreset = useMemo(() => {
     if (preset) return preset;
     if (confusionMatrixState) return ALGORITHM_PRESETS.find((p) => p.id === 'confusion-matrix');
     if (kmeansState) return ALGORITHM_PRESETS.find((p) => p.id === 'kmeans-clustering');
+    if (momentumState) return ALGORITHM_PRESETS.find((p) => p.id === 'momentum-optimizer');
     if (logisticState) return ALGORITHM_PRESETS.find((p) => p.id === 'logistic-regression');
     if (mnistState) return ALGORITHM_PRESETS.find((p) => p.id === 'mnist-digit-recognition');
     if (modernNeuronState) return ALGORITHM_PRESETS.find((p) => p.id === 'modern-neuron');
@@ -160,7 +163,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
     }
     if (points && points.length > 0) return ALGORITHM_PRESETS.find((p) => p.id === 'linear-regression');
     return null;
-  }, [preset, kmeansState, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
+  }, [preset, momentumState, kmeansState, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
   const smoothKernelC = useSmoothValue(kernelPos.c, 420);
   // Raw values from trace
   const rawW = step.state.weight !== undefined ? Number(step.state.weight) : 0;
@@ -364,6 +367,19 @@ export const VisualStage: React.FC<VisualStageProps> = ({
           className="w-full h-full flex items-center justify-center transition-transform duration-75"
         >
         {/* ========================================================= */}
+        {/* 0. MOMENTUM OPTIMIZER (Ravine, Vectors, Accelerated Path) */}
+        {/* ========================================================= */}
+        {momentumState && (
+          <MomentumStage
+            theme={theme}
+            language={language}
+            momentumState={momentumState}
+            onChangeInput={onChangeInput}
+            isExpanded={isMaximized}
+          />
+        )}
+
+        {/* ========================================================= */}
         {/* 0. K-MEANS CLUSTERING (Voronoi Cells, Centroids & WCSS)   */}
         {/* ========================================================= */}
         {kmeansState && (
@@ -405,7 +421,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         {/* ========================================================= */}
         {/* 1. DYNAMIC REGRESSION PLOT (Auto-scaled, Clickable, Clean) */}
         {/* ========================================================= */}
-        {points && points.length > 0 && !logisticState && !confusionMatrixState && !kmeansState && (
+        {points && points.length > 0 && !logisticState && !confusionMatrixState && !kmeansState && !momentumState && (
           <div className="w-full h-full relative flex items-center justify-center">
             {/* Top Click-To-Add-Point Hint */}
             <div className="absolute top-1 left-4 z-10 flex items-center gap-1.5 text-[11px] opacity-60 font-sans pointer-events-none">
@@ -1863,7 +1879,15 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         <span className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>{t.activeInvariantModel}:</span>
-          {kmeansState ? (
+          {momentumState ? (
+            <MathFormula
+              math={
+                step.invariant ||
+                `v_t = \\beta v_{t-1} + \\alpha \\nabla L, \\quad \\theta_{t+1} = \\theta_t - v_t`
+              }
+              className="ml-1 font-bold text-cyan-600 dark:text-cyan-300"
+            />
+          ) : kmeansState ? (
             <MathFormula
               math={
                 step.invariant ||

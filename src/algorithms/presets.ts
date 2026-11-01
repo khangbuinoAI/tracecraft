@@ -8,6 +8,7 @@ import type {
   QuadrantType,
   KMeansPoint,
   KMeansCentroid,
+  MomentumTrajectoryPoint,
 } from '../types';
 import { generateCanonicalDigitGrid, inferMnist } from '../components/MnistStage';
 export const ALGORITHM_PRESETS: AlgorithmPreset[] = [
@@ -1601,6 +1602,307 @@ def kmeans(X, k=3, max_iters=10):
           : `[Convergence Achieved!]: K-Means has fully converged. Centroids are stabilized (Δμ < 10⁻⁴) and cluster assignments remain invariant. Voronoi partitioning is at equilibrium with optimal WCSS J = ${finalResult.inertia.toFixed(2)}!`,
         invariant: `\\Delta \\mu \\to 0, \\quad J^* = ${finalResult.inertia.toFixed(2)} \\quad (\\text{Converged})`,
       });
+
+      const total = steps.length;
+      return steps.map((s, idx) => ({ ...s, step: idx + 1, totalSteps: total }));
+    },
+  },
+
+  // ==========================================
+  // Lesson 05: Gradient Descent with Momentum
+  // ==========================================
+  {
+    id: 'momentum-optimizer',
+    title: '05. Gradient Descent with Momentum (Accelerated Optimization)',
+    category: 'Classical Machine Learning',
+    difficulty: 'Intermediate',
+    badge: 'Optimizer',
+    visualType: 'momentum-optimizer',
+    formula: 'v_t = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t), \\quad \\theta_{t+1} = \\theta_t - v_t',
+    summary: 'Accelerates gradient descent and suppresses ravine oscillations by modeling physical inertia via an exponential moving average of velocity.',
+    description: 'Vanilla Gradient Descent struggles severely in ravines—surfaces where curvature is far steeper in one direction than another—causing wild, inefficient oscillations. Boris Polyak (1964) introduced the Heavy-Ball Method (Momentum), which simulates a heavy physical particle with mass and inertia. Past gradients compound with friction decay β into a velocity vector v_t, maintaining velocity down shallow valley floors while canceling perpendicular vibrations.',
+    sections: [
+      {
+        title: '1. The Ravine Problem & Condition Number',
+        content: 'In non-spherical loss landscapes (ravines, canyons), the Hessian matrix has vastly unequal eigenvalues (condition number κ = λ_max / λ_min >> 1). The gradient points almost perpendicularly to the optimal direction, forcing standard SGD to oscillate wildly across the steep ravine walls while making painfully slow progress along the flat base.',
+        formula: 'L(w_1, w_2) = \\frac{1}{2}(w_1^2 + 10 w_2^2), \\quad \\kappa = \\frac{\\lambda_{\\max}}{\\lambda_{\\min}} = 10',
+        keyTakeaway: 'Vanilla SGD requires an impractically small learning rate to avoid divergence across steep walls, freezing progress along shallow slopes.',
+      },
+      {
+        title: "2. Polyak's Heavy-Ball Momentum Formulation",
+        content: 'Polyak (1964) modeled optimization as a heavy rolling ball. At step t, the update velocity v_t accumulates the current gradient scaled by learning rate α plus a decayed fraction β of the previous velocity. Along consistent valley directions, velocity compounds to α / (1 - β) (a 10× speedup at β = 0.9). Along oscillating directions, alternating gradients cancel out by destructive interference.',
+        formula: 'v_t = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t), \\quad \\theta_{t+1} = \\theta_t - v_t, \\quad v_{\\text{terminal}} = \\frac{\\alpha}{1 - \\beta} \\nabla L',
+        keyTakeaway: 'Momentum provides low-pass filtering: high-frequency oscillations are smoothed out, while low-frequency consistent gradients are amplified up to 1/(1-β)×.',
+      },
+      {
+        title: '3. Classical Momentum vs. Nesterov Accelerated Gradient (NAG)',
+        content: 'Standard Polyak momentum computes the gradient at the current position θ_t before applying momentum β*v_{t-1}. Yurii Nesterov (1983) introduced a brilliant look-ahead enhancement: compute the gradient at the predicted future point (θ_t - β*v_{t-1}). If the momentum is carrying the ball too fast up the opposite slope, the look-ahead gradient applies an immediate braking force.',
+        formula: 'v_t^{\\text{NAG}} = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t - \\beta v_{t-1}), \\quad \\theta_{t+1} = \\theta_t - v_t^{\\text{NAG}}',
+        keyTakeaway: 'Nesterov look-ahead gradient prevents momentum overshooting, improving theoretical convergence from O(1/t) to the optimal O(1/t²).',
+      },
+      {
+        title: '4. The Backbone of Modern AI Optimizers (Adam)',
+        content: 'Momentum forms the first-order directional memory (1st moment m_t = E[g]) in modern AI training. Combining Momentum with second-moment adaptive learning rates (RMSprop v_t = E[g²]) created Adam (Kingma & Ba, 2014)—the standard optimizer powering all modern Transformers, LLMs (GPT-4, Claude, LLaMA), and deep vision architectures.',
+        formula: 'm_t = \\beta_1 m_{t-1} + (1 - \\beta_1) g_t, \\quad v_t = \\beta_2 v_{t-1} + (1 - \\beta_2) g_t^2, \\quad \\theta_{t+1} = \\theta_t - \\frac{\\alpha}{\\sqrt{\\hat{v}_t} + \\epsilon} \\hat{m}_t',
+        keyTakeaway: 'Without momentum, training deep multi-layer neural networks and LLMs would suffer from catastrophic vanishing gradients and stagnation in saddle points.',
+      },
+    ],
+    timeComplexity: 'O(T · D)',
+    spaceComplexity: 'O(D) velocity state',
+    tags: ['Optimization', 'Gradient Descent', 'Momentum', 'Polyak', 'Nesterov', 'Adam', 'Ravine', 'NumPy'],
+    defaultInput: 'start=(4.5, 1.8), beta=0.9, lr=0.1',
+    inputVariants: [
+      {
+        label: 'Elongated Ravine (β=0.9)',
+        value: 'start=(4.5, 1.8), beta=0.9, lr=0.1',
+      },
+      {
+        label: 'Vanilla SGD (No Momentum β=0.0)',
+        value: 'start=(4.5, 1.8), beta=0.0, lr=0.1',
+      },
+      {
+        label: 'High Inertia (β=0.95)',
+        value: 'start=(4.5, 1.8), beta=0.95, lr=0.1',
+      },
+      {
+        label: 'Moderate Damping (β=0.6)',
+        value: 'start=(4.5, 1.8), beta=0.6, lr=0.1',
+      },
+    ],
+    vi: {
+      title: '05. Gradient Descent với Momentum (Tối ưu Hóa Gia tốc)',
+      category: 'Machine Learning Cổ điển',
+      badge: 'Thuật toán Tối ưu',
+      summary: 'Gia tốc hóa Gradient Descent và triệt tiêu dao động nghẽn hẻm núi bằng mô hình quán tính vật lý qua trung bình trượt hàm mũ.',
+      description: 'Gradient Descent thuần (Vanilla SGD) gặp trở ngại nghiêm trọng trên các bề mặt hàm mất mát dạng "hẻm núi" (ravine)—nơi độ cong dốc gấp nhiều lần theo một chiều so với chiều còn lại—dẫn đến hiện tượng dao động dội qua lại liên tục và tiến triển cực kỳ chậm. Boris Polyak (1964) phát minh thuật toán Hòn bi Nặng (Heavy-Ball Momentum), mô phỏng một hạt vật lý có khối lượng và quán tính: các gradient trong quá khứ được tích lũy theo hệ số suy giảm ma sát β vào vector vận tốc v_t. Vận tốc duy trì gia tốc cao dọc theo đáy thung lũng phẳng và triệt tiêu dao động ngang, giúp tăng tốc độ hội tụ lên đến 10 lần.',
+      variants: [
+        {
+          label: 'Hẻm Dốc Hẹp (β=0.9)',
+          value: 'start=(4.5, 1.8), beta=0.9, lr=0.1',
+        },
+        {
+          label: 'SGD Thuần (Không Momentum β=0.0)',
+          value: 'start=(4.5, 1.8), beta=0.0, lr=0.1',
+        },
+        {
+          label: 'Quán tính Cao (β=0.95)',
+          value: 'start=(4.5, 1.8), beta=0.95, lr=0.1',
+        },
+        {
+          label: 'Hãm Vừa phải (β=0.6)',
+          value: 'start=(4.5, 1.8), beta=0.6, lr=0.1',
+        },
+      ],
+      sections: [
+        {
+          title: '1. Bệnh Nan y "Hẻm Núi" & Hiện tượng Dao động của SGD Thuần',
+          content: 'Trong không gian mất mát bất đẳng hướng, ma trận Hessian có các trị riêng chênh lệch lớn (chỉ số điều kiện κ = λ_max / λ_min >> 1). Vector gradient chỉ gần như vuông góc với hướng cực tiểu toàn cục, khiến thuật toán SGD thuần bật nảy dữ dội qua lại giữa hai vách dốc hẹp mà hầu như không di chuyển được dọc theo đáy thung lũng.',
+          formula: 'L(w_1, w_2) = \\frac{1}{2}(w_1^2 + 10 w_2^2), \\quad \\kappa = \\frac{\\lambda_{\\max}}{\\lambda_{\\min}} = 10',
+          keyTakeaway: 'SGD thuần buộc phải chọn learning rate cực nhỏ để tránh phân kỳ qua hai sườn dốc hẹp, làm đóng băng tốc độ tiến về cực tiểu.',
+        },
+        {
+          title: '2. Công thức Hòn bi Nặng (Heavy-Ball) của Polyak',
+          content: 'Polyak (1964) mô hình hóa quá trình tối ưu như một hòn bi nặng lăn xuống dốc có ma sát. Tại bước t, vận tốc v_t tích lũy gradient hiện tại cộng với quán tính từ vận tốc bước trước suy giảm theo tỷ lệ β. Dọc theo hướng dốc đồng nhất, vận tốc tích lũy đạt giá trị giới hạn α / (1 - β) (tăng tốc gấp 10 lần khi β = 0.9). Dọc theo hướng dao động đối xứng, các gradient ngược dấu triệt tiêu nhau hoàn toàn.',
+          formula: 'v_t = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t), \\quad \\theta_{t+1} = \\theta_t - v_t, \\quad v_{\\text{terminal}} = \\frac{\\alpha}{1 - \\ beta} \\nabla L',
+          keyTakeaway: 'Momentum hoạt động như bộ lọc thông thấp (low-pass filter): lọc sạch các dao động tần số cao và khuếch đại gia tốc hướng dốc nhất quán.',
+        },
+        {
+          title: '3. So sánh Momentum Cổ điển & Gia tốc Nesterov (NAG)',
+          content: 'Polyak Momentum tính gradient tại vị trí hiện tại θ_t trước khi cộng quán tính β*v_{t-1}. Yurii Nesterov (1983) cải tiến bằng cơ chế "nhìn trước": tính gradient tại điểm dự đoán tiếp theo (θ_t - β*v_{t-1}). Nếu quán tính đang đẩy hòn bi lăn quá nhanh lên sườn dốc bên kia, gradient nhìn trước sẽ đóng vai trò như một lực phanh chủ động.',
+          formula: 'v_t^{\\text{NAG}} = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t - \\beta v_{t-1}), \\quad \\theta_{t+1} = \\theta_t - v_t^{\\text{NAG}}',
+          keyTakeaway: 'Gia tốc Nesterov hạn chế tối đa hiện tượng vượt ngưỡng (overshooting), cải thiện tốc độ hội tụ lý thuyết từ O(1/t) lên mức tối ưu O(1/t²).',
+        },
+        {
+          title: '4. Nền tảng của các Trình Tối ưu AI Hiện đại (RMSprop & Adam)',
+          content: 'Momentum là thành phần ký ức định hướng bậc nhất (1st moment m_t = E[g]) của các thuật toán tối ưu hiện đại. Khi kết hợp Momentum với tốc độ học thích ứng theo phương sai bậc hai (RMSprop v_t = E[g²]), ta có thuật toán Adam (Kingma & Ba, 2014)—trình tối ưu mặc định huấn luyện hầu hết các mô hình Transformer, LLM (GPT-4, Claude, LLaMA) và mạng nơ-ron sâu ngày nay.',
+          formula: 'm_t = \\beta_1 m_{t-1} + (1 - \\beta_1) g_t, \\quad v_t = \\beta_2 v_{t-1} + (1 - \\beta_2) g_t^2, \\quad \\theta_{t+1} = \\theta_t - \\frac{\\alpha}{\\sqrt{\\hat{v}_t} + \\epsilon} \\hat{m}_t',
+          keyTakeaway: 'Không có Momentum, việc huấn luyện các mô hình AI sâu hàng trăm tầng sẽ bị đình trệ nghiêm trọng tại các điểm yên ngựa (saddle points) và vùng gradient triệt tiêu.',
+        },
+      ],
+    },
+    pythonCode: `import numpy as np
+
+def momentum_gradient_descent(w_init, lr=0.1, beta=0.9, max_iters=15):
+    # Loss: L(w1, w2) = 0.5 * (w1^2 + 10 * w2^2)
+    # Gradient: [w1, 10 * w2]
+    w = np.array(w_init, dtype=float)
+    v = np.zeros_like(w)
+    path = []
+
+    for step in range(max_iters):
+        loss = 0.5 * (w[0]**2 + 10 * w[1]**2)
+        grad = np.array([w[0], 10 * w[1]])
+        
+        # 1. Update velocity with momentum decay
+        v = beta * v + lr * grad
+        
+        # 2. Update parameters using velocity vector
+        w = w - v
+        path.append((w.copy(), loss, v.copy(), grad.copy()))
+        
+        if np.linalg.norm(grad) < 1e-3:
+            break
+
+    return w, path`,
+    code: `import numpy as np
+
+def momentum_sgd(w_init, lr=0.1, beta=0.9, max_iters=15):
+    w = np.array(w_init, dtype=float)
+    v = np.zeros_like(w)
+    for step in range(max_iters):
+        grad = np.array([w[0], 10 * w[1]])     # 1. Compute gradient
+        loss = 0.5 * (w[0]**2 + 10 * w[1]**2)   # 2. Compute loss
+        v = beta * v + lr * grad                # 3. Update velocity
+        w = w - v                               # 4. Parameter step
+        if np.linalg.norm(grad) < 1e-3:
+            break
+    return w, loss`,
+    generateTraces: (inputStr?: string, lang: Language = 'en'): TraceStep[] => {
+      const isVi = lang === 'vi';
+
+      let startW: [number, number] = [4.5, 1.8];
+      let beta = 0.9;
+      let lr = 0.1;
+
+      if (inputStr) {
+        const startMatch = inputStr.match(/start\s*=\s*\(?\s*([-0-9.]+)\s*[,:]\s*([-0-9.]+)\s*\)?/);
+        if (startMatch) {
+          startW = [Number(startMatch[1]), Number(startMatch[2])];
+        }
+        const betaMatch = inputStr.match(/beta\s*=\s*([0-9.]+)/);
+        if (betaMatch) {
+          beta = Number(betaMatch[1]);
+        }
+        const lrMatch = inputStr.match(/lr\s*=\s*([0-9.]+)/);
+        if (lrMatch) {
+          lr = Number(lrMatch[1]);
+        }
+      }
+
+
+      // Precompute Vanilla SGD trajectory for side-by-side comparison
+      const maxSteps = 12;
+      const fullVanillaPath: MomentumTrajectoryPoint[] = [];
+      let vanW1 = startW[0];
+      let vanW2 = startW[1];
+      const vanLr = 0.16; // Moderate learning rate to demonstrate realistic ravine oscillation
+
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (vanW1 * vanW1 + 10 * vanW2 * vanW2);
+        const g1 = vanW1;
+        const g2 = 10 * vanW2;
+        fullVanillaPath.push({
+          step: s,
+          w1: Number(vanW1.toFixed(3)),
+          w2: Number(vanW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          grad1: Number(g1.toFixed(3)),
+          grad2: Number(g2.toFixed(3)),
+        });
+        vanW1 -= vanLr * g1;
+        vanW2 -= vanLr * g2;
+      }
+
+      // Precompute Momentum trajectory
+      const fullMomentumPath: MomentumTrajectoryPoint[] = [];
+      let momW1 = startW[0];
+      let momW2 = startW[1];
+      let v1 = 0;
+      let v2 = 0;
+
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (momW1 * momW1 + 10 * momW2 * momW2);
+        const g1 = momW1;
+        const g2 = 10 * momW2;
+        fullMomentumPath.push({
+          step: s,
+          w1: Number(momW1.toFixed(3)),
+          w2: Number(momW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          v1: Number(v1.toFixed(4)),
+          v2: Number(v2.toFixed(4)),
+          grad1: Number(g1.toFixed(3)),
+          grad2: Number(g2.toFixed(3)),
+        });
+        v1 = beta * v1 + lr * g1;
+        v2 = beta * v2 + lr * g2;
+        momW1 -= v1;
+        momW2 -= v2;
+      }
+
+      const steps: TraceStep[] = [];
+
+      // Step 0: Initialization
+      const initPoint = fullMomentumPath[0];
+      steps.push({
+        step: 0,
+        totalSteps: 0,
+        line: 5,
+        action: 'init',
+        targets: [],
+        state: {
+          loss: initPoint.loss,
+          momentumState: {
+            beta,
+            learningRate: lr,
+            currentW: [initPoint.w1, initPoint.w2],
+            loss: initPoint.loss,
+            velocity: [0, 0],
+            gradient: [initPoint.grad1 || 0, initPoint.grad2 || 0],
+            momentumPath: [initPoint],
+            vanillaPath: [fullVanillaPath[0]],
+            surfaceType: 'ravine',
+            iteration: 0,
+            maxIterations: maxSteps,
+            converged: false,
+          },
+        },
+        explanation: isVi
+          ? `[Khởi tạo Momentum]: Điểm xuất phát θ_0 = (${initPoint.w1}, ${initPoint.w2}) trên sườn hẻm dốc. Vận tốc ban đầu v_0 = (0, 0). Hệ số quán tính β = ${beta}, tốc độ học α = ${lr}.`
+          : `[Momentum Init]: Initial position θ_0 = (${initPoint.w1}, ${initPoint.w2}) on the steep ravine wall. Initial velocity v_0 = (0, 0). Momentum factor β = ${beta}, learning rate α = ${lr}.`,
+        invariant: `v_0 = (0, 0), \\quad \\theta_0 = (${initPoint.w1}, ${initPoint.w2})`,
+      });
+
+      for (let s = 1; s <= maxSteps; s++) {
+        const curPt = fullMomentumPath[s];
+        const vMag = Math.hypot(curPt.v1 || 0, curPt.v2 || 0);
+        const isLast = s === maxSteps;
+
+        steps.push({
+          step: 0,
+          totalSteps: 0,
+          line: isLast ? 11 : 9,
+          action: isLast ? 'done' : 'update',
+          targets: [],
+          state: {
+            loss: curPt.loss,
+            momentumState: {
+              beta,
+              learningRate: lr,
+              currentW: [curPt.w1, curPt.w2],
+              loss: curPt.loss,
+              velocity: [curPt.v1 || 0, curPt.v2 || 0],
+              gradient: [curPt.grad1 || 0, curPt.grad2 || 0],
+              momentumPath: fullMomentumPath.slice(0, s + 1),
+              vanillaPath: fullVanillaPath.slice(0, s + 1),
+              surfaceType: 'ravine',
+              iteration: s,
+              maxIterations: maxSteps,
+              converged: isLast || curPt.loss < 0.05,
+            },
+          },
+          explanation: isLast
+            ? isVi
+              ? `[Hội tụ Hoàn tất]: Sau ${s} bước, Momentum đã dẫn dắt tham số tiệm cận đáy hẻm θ* = (0, 0) với Loss = ${curPt.loss.toFixed(4)}. So sánh với SGD thuần (đường đỏ), quán tính đã triệt tiêu hoàn toàn dao động ngang!`
+              : `[Convergence Complete]: After ${s} steps, Momentum guided parameters near global optimum θ* = (0, 0) with Loss = ${curPt.loss.toFixed(4)}. Compared to oscillating Vanilla SGD (red), lateral vibrations are completely extinguished!`
+            : isVi
+            ? `[Bước ${s} - Tích lũy Quán tính]: Vector vận tốc v_${s} = β·v_${s - 1} + α·∇L tích lũy động lượng dọc theo trục w₁, triệt tiêu dao động trên trục w₂. Vận tốc ‖v‖ = ${vMag.toFixed(3)}, Loss giảm còn ${curPt.loss.toFixed(4)}.`
+            : `[Step ${s} - Velocity Accumulation]: Velocity vector v_${s} = β·v_${s - 1} + α·∇L accelerates along the w₁ floor while canceling transverse w₂ oscillations. Speed ‖v‖ = ${vMag.toFixed(3)}, Loss reduced to ${curPt.loss.toFixed(4)}.`,
+          invariant: `v_{${s}} = ${beta} v_{${s - 1}} + ${lr} \\nabla L, \\quad L = ${curPt.loss.toFixed(4)}`,
+        });
+
+        if (curPt.loss < 0.02) break;
+      }
 
       const total = steps.length;
       return steps.map((s, idx) => ({ ...s, step: idx + 1, totalSteps: total }));

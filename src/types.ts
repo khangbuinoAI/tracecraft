@@ -26,7 +26,8 @@ export type VisualType =
   | 'cnn-convolution'
   | 'mnist-interactive'
   | 'array-bars'
-  | 'kmeans-clustering';
+  | 'kmeans-clustering'
+  | 'momentum-optimizer';
 
 export type StepAction =
   | 'init'
@@ -201,6 +202,32 @@ export interface KMeansState {
   activeClusterId?: number | null;
 }
 
+export interface MomentumTrajectoryPoint {
+  step: number;
+  w1: number;
+  w2: number;
+  loss: number;
+  v1?: number;
+  v2?: number;
+  grad1?: number;
+  grad2?: number;
+}
+
+export interface MomentumState {
+  beta: number; // Momentum coefficient β ∈ [0, 1)
+  learningRate: number; // α
+  currentW: [number, number]; // [w1, w2]
+  loss: number;
+  velocity: [number, number]; // [v1, v2]
+  gradient: [number, number]; // [grad1, grad2]
+  momentumPath: MomentumTrajectoryPoint[];
+  vanillaPath: MomentumTrajectoryPoint[];
+  surfaceType: 'ravine' | 'saddle' | 'beale' | 'plateau';
+  iteration: number;
+  maxIterations: number;
+  converged: boolean;
+}
+
 export type PrimitiveStateValue =
   | string
   | number
@@ -225,7 +252,9 @@ export type PrimitiveStateValue =
   | ConfusionMatrixSample[]
   | KMeansState
   | KMeansPoint[]
-  | KMeansCentroid[];
+  | KMeansCentroid[]
+  | MomentumState
+  | MomentumTrajectoryPoint[];
 export interface StepState {
   epoch?: number;
   loss?: number;
@@ -252,6 +281,7 @@ export interface StepState {
   logisticState?: LogisticState;
   confusionMatrixState?: ConfusionMatrixData;
   kmeansState?: KMeansState;
+  momentumState?: MomentumState;
   [key: string]: PrimitiveStateValue;
 }
 

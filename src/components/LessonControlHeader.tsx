@@ -14,6 +14,7 @@ import {
   Cpu,
   BrainCircuit,
   Target,
+  Compass,
 } from 'lucide-react';
 import type {
   ThemeMode,
@@ -392,6 +393,42 @@ export const LessonControlHeader: React.FC<LessonControlHeaderProps> = ({
           impact: isVi
             ? 'K-Means là thuật toán học không giám sát kinh điển (Stuart Lloyd, 1982). Không cần nhãn dán trước, thuật toán tự động gom nhóm N điểm dữ liệu vào k cụm phân biệt bằng cách tối thiểu hóa tổng bình phương khoảng cách tới các tâm cụm (WCSS/Inertia). Ứng dụng rộng rãi trong phân khúc khách hàng thương mại điện tử, nén ảnh (color quantization), và lập chỉ mục vector (IVF-PQ) cho các mô hình AI/LLM!'
             : 'K-Means is the foundational unsupervised clustering algorithm (Stuart Lloyd, 1982). Operating without ground-truth labels, it groups N unlabeled data points into k distinct partitions by iteratively minimizing Within-Cluster Sum of Squares (WCSS / Inertia). Widely deployed in e-commerce customer segmentation, image quantization compression, anomaly detection, and vector search indexing (IVF-PQ) for LLMs!',
+        };
+      }
+
+      case 'momentum-optimizer': {
+        const mom = step.state.momentumState;
+        const betaVal = mom?.beta ?? 0.9;
+        const lr = mom?.learningRate ?? 0.1;
+        const w = mom?.currentW ?? [0, 0];
+        const lossVal = mom?.loss ?? 0;
+        const vel = mom?.velocity ?? [0, 0];
+        const velMag = Math.hypot(vel[0], vel[1]);
+
+        return {
+          icon: <Compass className="w-4 h-4 text-cyan-400 animate-pulse" />,
+          title: isVi ? 'Gradient Descent với Momentum' : 'Gradient Descent with Momentum',
+          badge: isVi ? 'Tối ưu Hóa Gia tốc' : 'Accelerated Optimizer',
+          badgeColor: isDark
+            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+            : 'bg-cyan-100 text-cyan-800 border-cyan-300',
+          subtitle: (
+            <span>
+              β = <strong className="font-mono text-cyan-600 dark:text-cyan-400">{betaVal}</strong>
+              {' • '}
+              α = <strong className="font-mono text-indigo-600 dark:text-indigo-400">{lr}</strong>
+              {' • '}
+              w = <strong className="font-mono text-slate-700 dark:text-slate-300">({w[0].toFixed(2)}, {w[1].toFixed(2)})</strong>
+              {' • '}
+              Loss: <strong className="font-mono text-rose-600 dark:text-rose-400">{lossVal.toFixed(3)}</strong>
+              {' • '}
+              {isVi ? 'Vận tốc ‖v‖:' : 'Speed ‖v‖:'}{' '}
+              <strong className="font-mono text-emerald-600 dark:text-emerald-400">{velMag.toFixed(3)}</strong>
+            </span>
+          ),
+          impact: isVi
+            ? 'SGD thuần gặp "bệnh nan y" khi đi qua hẻm núi (ravine): dao động dữ dội qua lại giữa hai sườn dốc hẹp mà hầu như không tiến được về phía trước. Thuật toán Heavy-Ball của Polyak (1964) mô phỏng một hòn bi có khối lượng và quán tính vật lý: tích lũy vận tốc v_t theo các hướng dốc ổn định và triệt tiêu các dao động ngược chiều, giúp tăng tốc độ hội tụ gấp 10 lần (1/(1-β))!'
+            : 'Vanilla SGD struggles in ravines: oscillating violently across steep narrow walls while making negligible progress along the flat base. Boris Polyak’s Heavy-Ball Momentum (1964) simulates physical inertia: accumulating velocity v_t in consistent directions while averaging out alternating oscillations, accelerating convergence up to 10× (1/(1-β))!',
         };
       }
 
