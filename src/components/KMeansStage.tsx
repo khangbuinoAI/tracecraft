@@ -607,7 +607,7 @@ export const KMeansStage: React.FC<KMeansStageProps> = ({
               return (
                 <g
                   key={`pt-${p.id}`}
-                  className="cursor-pointer transition-transform duration-150"
+                  className="cursor-pointer"
                   onMouseEnter={() => setHoveredPoint(p)}
                   onMouseLeave={() => setHoveredPoint(null)}
                 >
@@ -616,11 +616,11 @@ export const KMeansStage: React.FC<KMeansStageProps> = ({
                     <circle
                       cx={cx}
                       cy={cy}
-                      r="12"
+                      r="10"
                       fill="none"
                       stroke={palette ? palette.main : '#38bdf8'}
                       strokeWidth="2"
-                      className="animate-ping opacity-60"
+                      opacity="0.8"
                     />
                   )}
                   {/* Point core */}
@@ -653,7 +653,7 @@ export const KMeansStage: React.FC<KMeansStageProps> = ({
                   onMouseEnter={() => setHoveredCentroid(i)}
                   onMouseLeave={() => setHoveredCentroid(null)}
                 >
-                  {/* Outer pulsating halo */}
+                  {/* Outer halo centered on centroid */}
                   <circle
                     cx={cx}
                     cy={cy}
@@ -661,9 +661,8 @@ export const KMeansStage: React.FC<KMeansStageProps> = ({
                     fill={palette.bg}
                     stroke={palette.main}
                     strokeWidth="1.5"
-                    strokeDasharray="3 2"
-                    className="animate-spin"
-                    style={{ animationDuration: '8s' }}
+                    strokeDasharray="4 3"
+                    opacity={0.85}
                   />
 
                   {/* Diamond / Cross marker */}
