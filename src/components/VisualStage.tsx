@@ -4,19 +4,20 @@ import {
   ZoomOut, 
   Maximize2, 
   Minimize2, 
-  Database,
   RotateCcw,
   MousePointerClick,
   TrendingDown,
   BrainCircuit,
   Activity
 } from 'lucide-react';
-import type { ThemeMode, TraceStep, Language } from '../types';
+import type { ThemeMode, TraceStep, Language, AlgorithmPreset } from '../types';
 import { MathFormula } from './MathFormula';
 import { getLocalizedText } from '../i18n/translations';
 import { MnistStage } from './MnistStage';
 import { LogisticStage } from './LogisticStage';
 import { ConfusionMatrixStage } from './ConfusionMatrixStage';
+import { LessonControlHeader } from './LessonControlHeader';
+import { ALGORITHM_PRESETS } from '../algorithms/presets';
 interface VisualStageProps {
   theme: ThemeMode;
   step: TraceStep;
@@ -25,6 +26,8 @@ interface VisualStageProps {
   language?: Language;
   isMaximized?: boolean;
   onToggleMaximize?: () => void;
+  preset?: AlgorithmPreset;
+  inputStr?: string;
 }
 // Ultra-smooth 60fps ease-out cubic interpolation hook
 function useSmoothValue(target: number, durationMs = 500): number {
@@ -62,12 +65,6 @@ function useSmoothValue(target: number, durationMs = 500): number {
   return val;
 }
 
-const DATA_PRESETS = [
-  { label: 'Standard', value: '(1, 2.2), (2, 2.8), (3, 4.5), (4, 4.9), (5, 6.2)' },
-  { label: 'Noisy', value: '(1, 1.4), (2, 3.8), (3, 3.1), (4, 5.9), (5, 5.2)' },
-  { label: 'Outlier', value: '(1, 2.0), (2, 2.5), (3, 3.0), (4, 3.5), (5, 8.5)' },
-  { label: 'Steep', value: '(1, 0.5), (2, 2.4), (3, 4.2), (4, 6.1), (5, 8.0)' },
-];
 
 export const VisualStage: React.FC<VisualStageProps> = ({
   theme,
@@ -77,6 +74,8 @@ export const VisualStage: React.FC<VisualStageProps> = ({
   language = 'en',
   isMaximized,
   onToggleMaximize,
+  preset,
+  inputStr = '',
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const isDark = theme === 'studio';
@@ -142,16 +141,31 @@ export const VisualStage: React.FC<VisualStageProps> = ({
   const logisticState = step.state.logisticState;
   const confusionMatrixState = step.state.confusionMatrixState;
   const smoothKernelR = useSmoothValue(kernelPos.r, 420);
+  const currentPreset = useMemo(() => {
+    if (preset) return preset;
+    if (confusionMatrixState) return ALGORITHM_PRESETS.find((p) => p.id === 'confusion-matrix');
+    if (logisticState) return ALGORITHM_PRESETS.find((p) => p.id === 'logistic-regression');
+    if (mnistState) return ALGORITHM_PRESETS.find((p) => p.id === 'mnist-digit-recognition');
+    if (modernNeuronState) return ALGORITHM_PRESETS.find((p) => p.id === 'modern-neuron');
+    if (neuronState) return ALGORITHM_PRESETS.find((p) => p.id === 'single-neuron');
+    if (tokens && tokens.length > 0) return ALGORITHM_PRESETS.find((p) => p.id === 'self-attention');
+    if (inputMatrix && kernel) return ALGORITHM_PRESETS.find((p) => p.id === 'cnn-feature-map');
+    if (layers && layers.length > 0) {
+      if (layers.length === 4) return ALGORITHM_PRESETS.find((p) => p.id === 'dog-cat-mlp');
+      if (layers[0].nodes.length === 3) return ALGORITHM_PRESETS.find((p) => p.id === 'house-price-mlp');
+      return ALGORITHM_PRESETS.find((p) => p.id === 'neural-network-mlp');
+    }
+    if (points && points.length > 0) return ALGORITHM_PRESETS.find((p) => p.id === 'linear-regression');
+    return null;
+  }, [preset, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
   const smoothKernelC = useSmoothValue(kernelPos.c, 420);
   // Raw values from trace
   const rawW = step.state.weight !== undefined ? Number(step.state.weight) : 0;
   const rawB = step.state.bias !== undefined ? Number(step.state.bias) : 0;
-  const rawLoss = step.state.loss !== undefined ? Number(step.state.loss) : 0;
 
   // Smooth interpolated values for fluid motion in Clean mode
   const smoothW = useSmoothValue(rawW, 360);
   const smoothB = useSmoothValue(rawB, 360);
-  const smoothLoss = useSmoothValue(rawLoss, 360);
   // Dynamic scale limits based on data points to ensure NO point is EVER clipped
   const coordLimits = useMemo(() => {
     if (!points || points.length === 0) return { maxX: 6, maxY: 10, yStep: 2 };
@@ -246,32 +260,6 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         {/* Data Controls & Graph Zoom Toolbar */}
         <div className="flex items-center gap-2">
           {/* Data Presets Selector (if Regression) */}
-          {points && !logisticState && !confusionMatrixState && onChangeInput && (
-            <div className="hidden sm:flex items-center gap-1">
-              <Database className="w-3.5 h-3.5 opacity-60" />
-              <div
-                className={`flex items-center p-0.5 rounded-xl border text-[11px] font-semibold ${
-                  isDark
-                    ? 'bg-[#151c2d] border-[#222f46]'
-                    : 'bg-white border-slate-200 shadow-xs'
-                }`}
-              >
-                {DATA_PRESETS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    onClick={() => onChangeInput(preset.value)}
-                    className={`px-2 py-0.5 rounded-lg transition-colors ${
-                      isDark
-                        ? 'hover:bg-slate-700 text-slate-300'
-                        : 'hover:bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Zoom & Size Controls */}
           {/* Redesigned Floating Modern Zoom & View Controls */}
@@ -337,44 +325,22 @@ export const VisualStage: React.FC<VisualStageProps> = ({
             </button>
           </div>
 
-          {/* Dynamic Metric Badges */}
-          <div className="flex items-center gap-1.5 text-xs font-mono">
-            {step.state.loss !== undefined && (
-              <span
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all shadow-xs ${
-                  isDark
-                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    : 'bg-rose-50 text-rose-700 border border-rose-200'
-                }`}
-              >
-                Loss: {smoothLoss.toFixed(3)}
-              </span>
-            )}
-            {step.state.weight !== undefined && (
-              <span
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all shadow-xs ${
-                  isDark
-                    ? 'bg-cyan-950 text-cyan-300 border border-cyan-800'
-                    : 'bg-blue-50 text-blue-700 border border-blue-200'
-                }`}
-              >
-                w: {smoothW.toFixed(2)} | b: {smoothB.toFixed(2)}
-              </span>
-            )}
-            {modernNeuronState && (
-              <span
-                className={`px-2.5 py-1 rounded-xl font-bold transition-all shadow-xs ${
-                  modernNeuronState.gradientVal === 0
-                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                }`}
-              >
-                da/dz: {modernNeuronState.gradientVal.toFixed(3)} ({modernNeuronState.activationType.toUpperCase()})
-              </span>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* ========================================================= */}
+      {/* 2. UNIFIED SCENARIO CONTROL HEADER & CONTEXT BANNER       */}
+      {/* ========================================================= */}
+      {currentPreset && !confusionMatrixState && (
+        <LessonControlHeader
+          preset={currentPreset}
+          step={step}
+          theme={theme}
+          language={language}
+          onChangeInput={onChangeInput}
+          inputStr={inputStr}
+        />
+      )}
 
       {/* Main Stage Visual Content with Dynamic Mouse Pan & Wheel Zoom */}
       <div

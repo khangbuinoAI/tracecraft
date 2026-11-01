@@ -106,7 +106,7 @@ export const MobileStoryMode: React.FC<MobileStoryModeProps> = ({
             : 'bg-[#0a0e1a] border-[#222f46]'
         }`}
       >
-        <VisualStage theme={theme} step={step} category={preset.category} />
+        <VisualStage theme={theme} step={step} category={preset.category} preset={preset} />
       </div>
 
       {/* Active Code Snippet Card */}
