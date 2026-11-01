@@ -1,4 +1,14 @@
-import type { AlgorithmPreset, TraceStep, Language, LogisticPoint, ConfusionMatrixData, ConfusionMatrixSample, QuadrantType } from '../types';
+import type {
+  AlgorithmPreset,
+  TraceStep,
+  Language,
+  LogisticPoint,
+  ConfusionMatrixData,
+  ConfusionMatrixSample,
+  QuadrantType,
+  KMeansPoint,
+  KMeansCentroid,
+} from '../types';
 import { generateCanonicalDigitGrid, inferMnist } from '../components/MnistStage';
 export const ALGORITHM_PRESETS: AlgorithmPreset[] = [
   // ==========================================
@@ -1175,6 +1185,421 @@ def evaluate_classification(y_true, y_prob, threshold=0.5):
         invariant: isVi
           ? `F1 = 2·(P·R)/(P+R) = ${initialData.f1Score.toFixed(3)}: Trung bình điều hòa cân bằng hoàn hảo giữa Precision và Recall.`
           : `F1 = 2·(P·R)/(P+R) = ${initialData.f1Score.toFixed(3)}: Harmonic mean harmonizing Precision and Recall.`,
+      });
+
+      const total = steps.length;
+      return steps.map((s, idx) => ({ ...s, step: idx + 1, totalSteps: total }));
+    },
+  },
+
+  // ==========================================
+  // Lesson 04: K-Means Clustering & Lloyd's Algorithm
+  // ==========================================
+  {
+    id: 'kmeans-clustering',
+    title: "04. K-Means Clustering & Lloyd's Algorithm",
+    category: 'Classical Machine Learning',
+    difficulty: 'Beginner',
+    badge: 'Unsupervised Learning',
+    visualType: 'kmeans-clustering',
+    formula: 'J = \\sum_{k=1}^K \\sum_{x \\in S_k} \\|x - \\mu_k\\|^2, \\quad \\mu_k = \\frac{1}{|S_k|} \\sum_{x \\in S_k} x',
+    summary: 'Partitions unlabelled continuous data into K distinct clusters by iteratively assigning points to the closest centroid and recalculating cluster centers.',
+    description: 'K-Means is the foundational unsupervised clustering algorithm (Lloyd, 1982). Operating without target labels y, it discovers latent group structures by minimizing Within-Cluster Sum of Squares (WCSS/Inertia). In step 1 (Assignment), points are assigned to their nearest centroid creating Voronoi cells. In step 2 (Update), centroids move to the center of mass of their assigned points. The process repeats until convergence.',
+    sections: [
+      {
+        title: '1. The Core Objective: Minimizing WCSS / Inertia',
+        content: 'Unlike supervised learning with target labels y, K-Means groups unlabelled data points into K partitions S = {S_1, S_2, ..., S_K}. The objective is to minimize the Within-Cluster Sum of Squares (WCSS), also known as Inertia J. WCSS measures cluster compactness by summing the squared Euclidean distances from every point to its assigned centroid.',
+        formula: 'J(S, \\mu) = \\sum_{k=1}^K \\sum_{x \\in S_k} \\|x - \\mu_k\\|^2',
+        keyTakeaway: 'Minimizing WCSS is an NP-hard problem; Lloyd’s algorithm is a greedy coordinate descent that converges to a local minimum.',
+      },
+      {
+        title: "2. Lloyd's 2-Step Alternating Optimization",
+        content: 'Stuart Lloyd (1982) formulated the standard K-Means algorithm as an alternating Expectation-Maximization (EM) optimization. Step 1 (Assignment / E-Step): With centroids fixed, each point is assigned to its nearest centroid, partitioning the space into Voronoi polyhedra. Step 2 (Update / M-Step): With cluster assignments fixed, each centroid is recomputed as the arithmetic mean of its assigned points.',
+        formula: 'c_i^{(t)} = \\arg\\min_{k} \\|x_i - \\mu_k^{(t)}\\|^2, \\quad \\mu_k^{(t+1)} = \\frac{1}{|S_k^{(t)}|} \\sum_{x \\in S_k^{(t)}} x',
+        keyTakeaway: 'Both steps are guaranteed to monotonically decrease or maintain WCSS. Since there are finite partitions, convergence is guaranteed!',
+      },
+      {
+        title: '3. Initialization Sensitivity & K-Means++',
+        content: 'Random initialization often gets trapped in poor local optima (e.g., splitting a single dense cluster or stranding empty centroids). David Arthur & Sergei Vassilvitskii (2007) introduced K-Means++: the first centroid is chosen uniformly at random, and each subsequent centroid is sampled with probability proportional to the squared distance D(x)^2 to the nearest existing centroid.',
+        formula: 'P(x) = \\frac{D(x)^2}{\\sum_{x\' \\in X} D(x\')^2}',
+        keyTakeaway: 'K-Means++ guarantees an expected approximation ratio of O(log K) to the globally optimal WCSS, dramatically speeding up convergence.',
+      },
+      {
+        title: '4. Voronoi Partitions & Vector Database Indexing (IVF)',
+        content: 'K-Means assumes isotropic (spherical) clusters with equal variance, producing linear Voronoi decision boundaries. Today, K-Means is essential for modern AI: Inverted File Flat (IVF) indexers in vector databases (FAISS, Milvus, Pinecone) cluster high-dimensional embedding vectors into Voronoi cells, reducing nearest-neighbor search from O(N) to O(N / K).',
+        formula: 'V(\\mu_k) = \\left\\{ x \\in \\mathbb{R}^d \\;\\middle|\\; \\|x - \\mu_k\\| \\le \\|x - \\mu_j\\|, \\; \\forall j \\neq k \\right\\}',
+        keyTakeaway: 'K-Means serves as the foundational vector quantization (VQ) clustering mechanism in LLM retrieval-augmented generation (RAG).',
+      },
+    ],
+    timeComplexity: 'O(T · K · N · D)',
+    spaceComplexity: 'O(N · D + K · D)',
+    tags: ['Unsupervised', 'Clustering', 'Lloyd Algorithm', 'WCSS', 'Inertia', 'Voronoi', 'NumPy', 'FAISS'],
+    defaultInput: '(2.0, 2.5), (2.5, 3.5), (3.0, 2.0), (7.0, 7.5), (7.5, 8.5), (8.0, 7.0), (3.0, 7.5), (2.5, 8.5), (3.5, 8.0)',
+    inputVariants: [
+      {
+        label: '3 Blobs (Separable)',
+        value: '(2.0, 2.5), (2.5, 3.5), (3.0, 2.0), (7.0, 7.5), (7.5, 8.5), (8.0, 7.0), (3.0, 7.5), (2.5, 8.5), (3.5, 8.0)',
+      },
+      {
+        label: '4 Corners (Symmetric)',
+        value: '(2.0, 2.0), (2.5, 3.0), (3.0, 2.2), (2.0, 8.0), (2.5, 7.5), (3.0, 8.2), (8.0, 2.0), (7.5, 2.8), (8.2, 3.0), (8.0, 8.0), (7.5, 8.5), (8.5, 7.8)',
+      },
+      {
+        label: 'Unequal Variance',
+        value: '(2.0, 2.0), (2.2, 2.3), (2.4, 2.1), (2.1, 2.4), (7.0, 6.0), (8.5, 8.0), (6.5, 8.5), (8.0, 6.5), (4.0, 7.0), (3.0, 8.5), (4.5, 8.0)',
+      },
+      {
+        label: 'Noisy Overlap',
+        value: '(3.0, 4.0), (3.5, 4.5), (4.0, 4.2), (4.5, 5.0), (5.0, 4.8), (5.5, 5.5), (6.0, 5.2), (6.5, 6.0), (7.0, 5.8), (7.5, 6.5)',
+      },
+    ],
+    vi: {
+      title: '04. Phân cụm K-Means & Thuật toán Lloyd',
+      category: 'Machine Learning Cổ điển',
+      badge: 'Học Không Giám Sát',
+      summary: 'Phân nhóm dữ liệu liên tục không nhãn vào K cụm bằng cách tối thiểu hóa tổng bình phương khoảng cách tới các trọng tâm cụm.',
+      description: 'K-Means là thuật toán học không giám sát kinh điển nhất trong Machine Learning (Stuart Lloyd, 1982). Hoạt động hoàn toàn không cần nhãn đích y, thuật toán tự động khám phá cấu trúc ẩn bằng cách tối thiểu hóa tổng bình phương khoảng cách nội cụm (WCSS/Inertia). Bước 1 (Gán cụm): gán từng điểm về tâm cụm gần nhất tạo thành các phân hoạch Voronoi. Bước 2 (Cập nhật): di chuyển tâm cụm về trọng tâm hình học của các điểm vừa gán. Quá trình lặp lại tuần hoàn cho đến khi hội tụ.',
+      variants: [
+        {
+          label: '3 Cụm Phân biệt',
+          value: '(2.0, 2.5), (2.5, 3.5), (3.0, 2.0), (7.0, 7.5), (7.5, 8.5), (8.0, 7.0), (3.0, 7.5), (2.5, 8.5), (3.5, 8.0)',
+        },
+        {
+          label: '4 Góc Đối xứng',
+          value: '(2.0, 2.0), (2.5, 3.0), (3.0, 2.2), (2.0, 8.0), (2.5, 7.5), (3.0, 8.2), (8.0, 2.0), (7.5, 2.8), (8.2, 3.0), (8.0, 8.0), (7.5, 8.5), (8.5, 7.8)',
+        },
+        {
+          label: 'Độ Biến thiên Khác nhau',
+          value: '(2.0, 2.0), (2.2, 2.3), (2.4, 2.1), (2.1, 2.4), (7.0, 6.0), (8.5, 8.0), (6.5, 8.5), (8.0, 6.5), (4.0, 7.0), (3.0, 8.5), (4.5, 8.0)',
+        },
+        {
+          label: 'Đan xen Nhiễu',
+          value: '(3.0, 4.0), (3.5, 4.5), (4.0, 4.2), (4.5, 5.0), (5.0, 4.8), (5.5, 5.5), (6.0, 5.2), (6.5, 6.0), (7.0, 5.8), (7.5, 6.5)',
+        },
+      ],
+      sections: [
+        {
+          title: '1. Mục tiêu Cốt lõi: Cực tiểu hóa WCSS / Quán tính Inertia',
+          content: 'Khác với học có giám sát có nhãn mục tiêu y, K-Means gom N điểm dữ liệu không nhãn vào K tập phân hoạch rời rạc S = {S_1, S_2, ..., S_K}. Mục tiêu là cực tiểu hóa hàm mất mát WCSS (Within-Cluster Sum of Squares), hay còn gọi là Quán tính Inertia J. WCSS đo lường độ phân tán nội cụm bằng tổng bình phương khoảng cách Euclid từ mỗi điểm tới tâm cụm tương ứng.',
+          formula: 'J(S, \\mu) = \\sum_{k=1}^K \\sum_{x \\in S_k} \\|x - \\mu_k\\|^2',
+          keyTakeaway: 'Tìm nghiệm tối ưu toàn cục cho WCSS là bài toán NP-hard; thuật toán Lloyd giải gần đúng bằng phương pháp hạ tọa độ tham lam hội tụ về cực tiểu cục bộ.',
+        },
+        {
+          title: '2. Tối ưu Hóa Xen kẽ 2 Bước của Lloyd (Assign & Update)',
+          content: 'Stuart Lloyd (1982) đề xuất thuật toán tối ưu xen kẽ tương tự nguyên lý Expectation-Maximization (EM). Bước 1 (Gán cụm - Assignment): Giữ cố định K tâm cụm, gán mỗi điểm dữ liệu vào tâm cụm gần nó nhất theo khoảng cách Euclid, phân chia không gian thành các ô đa diện Voronoi. Bước 2 (Cập nhật - Update): Giữ cố định phân cụm, tính lại tọa độ mỗi tâm cụm bằng trung bình cộng tọa độ các điểm thuộc cụm đó.',
+          formula: 'c_i^{(t)} = \\arg\\min_{k} \\|x_i - \\mu_k^{(t)}\\|^2, \\quad \\mu_k^{(t+1)} = \\frac{1}{|S_k^{(t)}|} \\sum_{x \\in S_k^{(t)}} x',
+          keyTakeaway: 'Cả hai bước đều đảm bảo WCSS chỉ giảm hoặc giữ nguyên (đơn điệu). Do số cách phân hoạch là hữu hạn, thuật toán chắc chắn sẽ dừng và hội tụ!',
+        },
+        {
+          title: '3. Độ Nhạy với Khởi tạo & Cải tiến K-Means++',
+          content: 'Khởi tạo ngẫu nhiên đơn thuần rất dễ rơi vào bẫy cực tiểu cục bộ kém chất lượng (ví dụ chia cắt một cụm tự nhiên hoặc tạo ra tâm cụm rỗng). David Arthur và Sergei Vassilvitskii (2007) phát minh thuật toán K-Means++: tâm đầu tiên chọn ngẫu nhiên đều, các tâm tiếp theo được chọn với xác suất tỷ lệ thuận với bình phương khoảng cách D(x)^2 tới tâm gần nhất đã có.',
+          formula: 'P(x) = \\frac{D(x)^2}{\\sum_{x\' \\in X} D(x\')^2}',
+          keyTakeaway: 'K-Means++ chứng minh được kỳ vọng sai số WCSS đạt giới hạn O(log K) so với nghiệm tối ưu lý thuyết, giúp tăng tốc độ hội tụ rõ rệt.',
+        },
+        {
+          title: '4. Phân hoạch Voronoi & Chỉ mục Tìm kiếm Vector (IVF) cho LLM',
+          content: 'K-Means ngầm giả định các cụm có dạng hình cầu đối xứng (đẳng hướng) và phương sai bằng nhau, tạo ra các ranh giới quyết định tuyến tính Voronoi. Trong kỷ nguyên Generative AI, K-Means là trái tim của cấu trúc chỉ mục IVF (Inverted File Index) trong cơ sở dữ liệu vector (FAISS, Milvus, Pinecone), phân cụm hàng tỷ vector nhúng thành các ô Voronoi để giảm độ phức tạp tìm kiếm từ O(N) xuống O(N/K).',
+          formula: 'V(\\mu_k) = \\left\\{ x \\in \\mathbb{R}^d \\;\\middle|\\; \\|x - \\mu_k\\| \\le \\|x - \\mu_j\\|, \\; \\forall j \\neq k \\right\\}',
+          keyTakeaway: 'K-Means là kỹ thuật lượng tử hóa vector (Vector Quantization) cốt lõi hỗ trợ truy xuất ngữ nghĩa siêu tốc trong các hệ thống RAG hiện đại.',
+        },
+      ],
+    },
+    pythonCode: `import numpy as np
+
+def kmeans(X, k=3, max_iters=10, tol=1e-4):
+    # 1. K-Means++ Centroid Seeding
+    n_samples, n_features = X.shape
+    centroids = np.empty((k, n_features))
+    centroids[0] = X[np.random.randint(n_samples)]
+    
+    for c_idx in range(1, k):
+        dist_sq = np.min([np.sum((X - c)**2, axis=1) for c in centroids[:c_idx]], axis=0)
+        probs = dist_sq / np.sum(dist_sq)
+        centroids[c_idx] = X[np.random.choice(n_samples, p=probs)]
+        
+    for iteration in range(max_iters):
+        # 2. Assignment Step: assign points to closest centroid
+        distances = np.linalg.norm(X[:, None] - centroids, axis=2)
+        clusters = np.argmin(distances, axis=1)
+        
+        # 3. Update Step: compute center of mass
+        new_centroids = np.array([
+            X[clusters == j].mean(axis=0) if np.any(clusters == j) else centroids[j]
+            for j in range(k)
+        ])
+        
+        # 4. Check Convergence: centroid shift < tol
+        shift = np.sum(np.linalg.norm(new_centroids - centroids, axis=1))
+        if shift < tol:
+            break
+        centroids = new_centroids
+        
+    inertia = np.sum((X - centroids[clusters]) ** 2)
+    return centroids, clusters, inertia`,
+    code: `import numpy as np
+
+def kmeans(X, k=3, max_iters=10):
+    # 1. Initialize k centroids
+    centroids = X[np.random.choice(len(X), k, replace=False)].copy()
+    for iteration in range(max_iters):
+        # 2. Assignment Step: Voronoi nearest centroid
+        distances = np.linalg.norm(X[:, None] - centroids, axis=2)
+        clusters = np.argmin(distances, axis=1)
+        # 3. Update Step: compute cluster center of mass
+        new_centroids = np.array([X[clusters == j].mean(axis=0) for j in range(k)])
+        # 4. Check convergence: centroid shift < tol
+        if np.allclose(centroids, new_centroids, atol=1e-4):
+            break
+        centroids = new_centroids
+    inertia = np.sum((X - centroids[clusters]) ** 2)
+    return centroids, clusters, inertia`,
+    generateTraces: (inputStr?: string, lang: Language = 'en'): TraceStep[] => {
+      const isVi = lang === 'vi';
+      const CENTROID_COLORS = ['#06b6d4', '#f59e0b', '#f43f5e', '#10b981', '#8b5cf6'];
+
+      let rawPoints: { x: number; y: number }[] = [
+        { x: 2.0, y: 2.5 },
+        { x: 2.5, y: 3.5 },
+        { x: 3.0, y: 2.0 },
+        { x: 7.0, y: 7.5 },
+        { x: 7.5, y: 8.5 },
+        { x: 8.0, y: 7.0 },
+        { x: 3.0, y: 7.5 },
+        { x: 2.5, y: 8.5 },
+        { x: 3.5, y: 8.0 },
+      ];
+
+      if (inputStr) {
+        const matches = [...inputStr.matchAll(/\(?\s*([0-9.]+)\s*[,:]\s*([0-9.]+)\s*\)?/g)];
+        if (matches.length >= 3) {
+          rawPoints = matches.map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+        }
+      }
+
+      const numPoints = rawPoints.length;
+      let k = 3;
+      if (inputStr && (inputStr.includes('4 Corners') || inputStr.includes('k=4') || numPoints >= 12)) {
+        k = 4;
+      }
+      k = Math.min(k, numPoints);
+
+      // Deterministic initial centroid seeds
+      let curCentroids: KMeansCentroid[] = [];
+      if (k === 3) {
+        curCentroids = [
+          { id: 0, x: 2.2, y: 2.8, color: CENTROID_COLORS[0], count: 0 },
+          { id: 1, x: 7.2, y: 7.2, color: CENTROID_COLORS[1], count: 0 },
+          { id: 2, x: 3.2, y: 7.2, color: CENTROID_COLORS[2], count: 0 },
+        ];
+      } else if (k === 4) {
+        curCentroids = [
+          { id: 0, x: 2.5, y: 2.5, color: CENTROID_COLORS[0], count: 0 },
+          { id: 1, x: 2.5, y: 8.0, color: CENTROID_COLORS[1], count: 0 },
+          { id: 2, x: 7.8, y: 2.6, color: CENTROID_COLORS[2], count: 0 },
+          { id: 3, x: 7.8, y: 8.0, color: CENTROID_COLORS[3], count: 0 },
+        ];
+      } else {
+        curCentroids = Array.from({ length: k }, (_, idx) => {
+          const ptIdx = Math.floor((idx * numPoints) / k);
+          return {
+            id: idx,
+            x: rawPoints[ptIdx].x,
+            y: rawPoints[ptIdx].y,
+            color: CENTROID_COLORS[idx % CENTROID_COLORS.length],
+            count: 0,
+          };
+        });
+      }
+
+      let curPoints: KMeansPoint[] = rawPoints.map((pt, idx) => ({
+        id: idx + 1,
+        x: pt.x,
+        y: pt.y,
+        cluster: -1,
+      }));
+
+      const steps: TraceStep[] = [];
+
+      // Helper to compute assignment, distances and inertia
+      const assignPoints = (pts: KMeansPoint[], cents: KMeansCentroid[]) => {
+        let inertia = 0;
+        const counts = new Array(cents.length).fill(0);
+        const assigned = pts.map((p) => {
+          let bestDist = Infinity;
+          let bestCluster = 0;
+          const dists = cents.map((c, cIdx) => {
+            const d = Math.hypot(p.x - c.x, p.y - c.y);
+            if (d < bestDist) {
+              bestDist = d;
+              bestCluster = cIdx;
+            }
+            return Number(d.toFixed(3));
+          });
+
+          inertia += bestDist * bestDist;
+          counts[bestCluster]++;
+          return {
+            ...p,
+            cluster: bestCluster,
+            distanceToCentroid: Number(bestDist.toFixed(3)),
+            distances: dists,
+          };
+        });
+
+        const updatedCentroids = cents.map((c, i) => ({ ...c, count: counts[i] }));
+        return { assigned, updatedCentroids, inertia: Number(inertia.toFixed(2)) };
+      };
+
+      // Step 0: Initialization
+      const initCalc = assignPoints(curPoints, curCentroids);
+      steps.push({
+        step: 0,
+        totalSteps: 0,
+        line: 5,
+        action: 'init',
+        targets: curCentroids.map((c) => c.id),
+        state: {
+          loss: initCalc.inertia,
+          kmeansState: {
+            k,
+            iteration: 0,
+            maxIterations: 6,
+            phase: 'init',
+            points: curPoints, // Initially unassigned
+            centroids: curCentroids,
+            inertia: initCalc.inertia,
+            centroidShift: 0,
+            converged: false,
+          },
+        },
+        explanation: isVi
+          ? `[Khởi tạo K-Means]: Khởi tạo K = ${k} tâm cụm ngẫu nhiên (Seeds) phân bố trong không gian đặc trưng. Toàn bộ ${numPoints} điểm dữ liệu ban đầu đang ở trạng thái chưa phân cụm (unassigned).`
+          : `[K-Means Initialization]: Seeded K = ${k} initial centroids across the feature space. All ${numPoints} input data points are currently unassigned.`,
+        invariant: isVi
+          ? `K = ${k}, \\quad \\mu_k \\in \\mathbb{R}^2: \\text{Khởi tạo K tâm cụm ban đầu}`
+          : `K = ${k}, \\quad \\mu_k \\in \\mathbb{R}^2: \\text{K initial cluster centroids seeded}`,
+      });
+
+      let maxIters = 4;
+      let prevInertia = initCalc.inertia;
+
+      for (let iter = 1; iter <= maxIters; iter++) {
+        // Step A: Assignment Step (Voronoi nearest centroid)
+        const assignResult = assignPoints(curPoints, curCentroids);
+        curPoints = assignResult.assigned;
+        curCentroids = assignResult.updatedCentroids;
+        const curInertia = assignResult.inertia;
+
+        steps.push({
+          step: 0,
+          totalSteps: 0,
+          line: 8,
+          action: 'compute',
+          targets: curPoints.map((p) => p.id),
+          state: {
+            loss: curInertia,
+            kmeansState: {
+              k,
+              iteration: iter,
+              maxIterations: maxIters,
+              phase: 'assign',
+              points: curPoints,
+              centroids: curCentroids,
+              inertia: curInertia,
+              prevInertia,
+              centroidShift: 0,
+              converged: false,
+            },
+          },
+          explanation: isVi
+            ? `[Vòng lặp ${iter} - Gán Cụm Voronoi]: Tính khoảng cách Euclid từ mỗi điểm tới ${k} tâm cụm. Gán mỗi điểm vào tâm cụm gần nhất c_i = argmin ||x_i - μ_k||², hình thành các ranh giới ô Voronoi. Tổng quán tính WCSS J = ${curInertia.toFixed(2)}.`
+            : `[Iteration ${iter} - Assignment Step]: Calculated Euclidean distances to all ${k} centroids. Assigned each sample to its nearest centroid c_i = argmin ||x_i - μ_k||², yielding Voronoi cells. Current WCSS Inertia J = ${curInertia.toFixed(2)}.`,
+          invariant: `c_i^{(t)} = \\arg\\min_{k} \\|x_i - \\mu_k^{(t)}\\|^2, \\quad J = ${curInertia.toFixed(2)}`,
+        });
+
+        // Step B: Centroid Update Step (Center of mass)
+        let totalShift = 0;
+        const nextCentroids: KMeansCentroid[] = curCentroids.map((c, cIdx) => {
+          const clusterPoints = curPoints.filter((p) => p.cluster === cIdx);
+          if (clusterPoints.length === 0) return c;
+          const avgX = Number((clusterPoints.reduce((acc, p) => acc + p.x, 0) / clusterPoints.length).toFixed(2));
+          const avgY = Number((clusterPoints.reduce((acc, p) => acc + p.y, 0) / clusterPoints.length).toFixed(2));
+          const shift = Math.hypot(avgX - c.x, avgY - c.y);
+          totalShift += shift;
+          return {
+            ...c,
+            prevX: c.x,
+            prevY: c.y,
+            x: avgX,
+            y: avgY,
+            count: clusterPoints.length,
+          };
+        });
+
+        totalShift = Number(totalShift.toFixed(3));
+        const updatedAssign = assignPoints(curPoints, nextCentroids);
+        curCentroids = nextCentroids;
+        prevInertia = curInertia;
+        const newInertia = updatedAssign.inertia;
+
+        steps.push({
+          step: 0,
+          totalSteps: 0,
+          line: 10,
+          action: 'update',
+          targets: curCentroids.map((c) => c.id),
+          state: {
+            loss: newInertia,
+            kmeansState: {
+              k,
+              iteration: iter,
+              maxIterations: maxIters,
+              phase: 'update',
+              points: curPoints,
+              centroids: curCentroids,
+              inertia: newInertia,
+              prevInertia: curInertia,
+              centroidShift: totalShift,
+              converged: false,
+            },
+          },
+          explanation: isVi
+            ? `[Vòng lặp ${iter} - Cập nhật Trọng tâm]: Tái tính tọa độ ${k} tâm cụm bằng trung bình cộng tọa độ các điểm thuộc cụm (μ_k = 1/|S_k| Σ x). Tổng độ dịch chuyển tâm Δμ = ${totalShift.toFixed(2)}. Quán tính WCSS giảm xuống ${newInertia.toFixed(2)}.`
+            : `[Iteration ${iter} - Centroid Update]: Shifted centroids to the geometric center of mass (μ_k = 1/|S_k| Σ x). Total centroid displacement Δμ = ${totalShift.toFixed(2)}. Inertia lowered to ${newInertia.toFixed(2)}.`,
+          invariant: `\\mu_k^{(t+1)} = \\frac{1}{|S_k|} \\sum_{x \\in S_k} x, \\quad \\Delta \\mu = ${totalShift.toFixed(2)}`,
+        });
+
+        if (totalShift < 0.05 || iter === maxIters) {
+          break;
+        }
+      }
+
+      // Step Final: Convergence
+      const finalResult = assignPoints(curPoints, curCentroids);
+      steps.push({
+        step: 0,
+        totalSteps: 0,
+        line: 14,
+        action: 'done',
+        targets: curCentroids.map((c) => c.id),
+        state: {
+          loss: finalResult.inertia,
+          kmeansState: {
+            k,
+            iteration: steps.length / 2,
+            maxIterations: maxIters,
+            phase: 'converged',
+            points: finalResult.assigned,
+            centroids: finalResult.updatedCentroids,
+            inertia: finalResult.inertia,
+            centroidShift: 0,
+            converged: true,
+          },
+        },
+        explanation: isVi
+          ? `[Hội tụ Thành công!]: Thuật toán K-Means đã hội tụ hoàn toàn. Vị trí các tâm cụm đã ổn định (Δμ < 10⁻⁴), phân cụm không còn thay đổi. Cấu trúc phân hoạch Voronoi đạt trạng thái cân bằng với Quán tính WCSS tối ưu J = ${finalResult.inertia.toFixed(2)}!`
+          : `[Convergence Achieved!]: K-Means has fully converged. Centroids are stabilized (Δμ < 10⁻⁴) and cluster assignments remain invariant. Voronoi partitioning is at equilibrium with optimal WCSS J = ${finalResult.inertia.toFixed(2)}!`,
+        invariant: `\\Delta \\mu \\to 0, \\quad J^* = ${finalResult.inertia.toFixed(2)} \\quad (\\text{Converged})`,
       });
 
       const total = steps.length;

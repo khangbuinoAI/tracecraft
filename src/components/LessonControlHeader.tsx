@@ -13,6 +13,7 @@ import {
   Sliders,
   Cpu,
   BrainCircuit,
+  Target,
 } from 'lucide-react';
 import type {
   ThemeMode,
@@ -342,6 +343,55 @@ export const LessonControlHeader: React.FC<LessonControlHeaderProps> = ({
           impact: isVi
             ? 'Hàm Sigmoid ép trọn điểm số thực vào khoảng xác suất (0, 1). Đặc tính bão hòa hai đầu giúp mô hình kháng ngoại lai vượt trội, tìm ra ranh giới x* phân định dứt khoát giữa hai lớp.'
             : 'The Sigmoid function smoothly bounds real scores into valid probabilities (0, 1). Its saturating tails shield the model from extreme outliers, establishing an optimal boundary x* = -b/w.',
+        };
+      }
+
+      case 'kmeans-clustering': {
+        const km = step.state.kmeansState;
+        const iter = km?.iteration ?? 0;
+        const kVal = km?.k ?? 3;
+        const inertia = km?.inertia ?? 0;
+        const phase = km?.phase ?? 'init';
+        const phaseLabel = isVi
+          ? phase === 'init'
+            ? 'Khởi tạo Tâm Cụm (Seeds)'
+            : phase === 'assign'
+            ? 'Gán Cụm (Voronoi)'
+            : phase === 'update'
+            ? 'Cập nhật Trọng tâm'
+            : 'Đã Hội tụ'
+          : phase === 'init'
+          ? 'Init Centroids'
+          : phase === 'assign'
+          ? 'Voronoi Assign'
+          : phase === 'update'
+          ? 'Mean Update'
+          : 'Converged';
+
+        return {
+          icon: <Target className="w-4 h-4 text-emerald-500 animate-pulse" />,
+          title: isVi ? 'Phân cụm K-Means (Lloyd)' : 'K-Means Clustering (Lloyd)',
+          badge: isVi ? 'Học Không Giám Sát' : 'Unsupervised Learning',
+          badgeColor: isDark
+            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+            : 'bg-emerald-100 text-emerald-800 border-emerald-300',
+          subtitle: (
+            <span>
+              {isVi ? 'Giai đoạn:' : 'Phase:'}{' '}
+              <strong className="font-mono text-cyan-600 dark:text-cyan-400">{phaseLabel}</strong>
+              {' • '}
+              {isVi ? 'Vòng lặp:' : 'Iter:'}{' '}
+              <strong className="font-mono text-indigo-600 dark:text-indigo-400">t = {iter}</strong>
+              {' • '}
+              <strong className="font-mono text-amber-600 dark:text-amber-400">K = {kVal}</strong>
+              {' • '}
+              {isVi ? 'Quán tính WCSS:' : 'Inertia J:'}{' '}
+              <strong className="font-mono text-emerald-600 dark:text-emerald-400">{inertia.toFixed(2)}</strong>
+            </span>
+          ),
+          impact: isVi
+            ? 'K-Means là thuật toán học không giám sát kinh điển (Stuart Lloyd, 1982). Không cần nhãn dán trước, thuật toán tự động gom nhóm N điểm dữ liệu vào k cụm phân biệt bằng cách tối thiểu hóa tổng bình phương khoảng cách tới các tâm cụm (WCSS/Inertia). Ứng dụng rộng rãi trong phân khúc khách hàng thương mại điện tử, nén ảnh (color quantization), và lập chỉ mục vector (IVF-PQ) cho các mô hình AI/LLM!'
+            : 'K-Means is the foundational unsupervised clustering algorithm (Stuart Lloyd, 1982). Operating without ground-truth labels, it groups N unlabeled data points into k distinct partitions by iteratively minimizing Within-Cluster Sum of Squares (WCSS / Inertia). Widely deployed in e-commerce customer segmentation, image quantization compression, anomaly detection, and vector search indexing (IVF-PQ) for LLMs!',
         };
       }
 

@@ -16,6 +16,7 @@ import { getLocalizedText } from '../i18n/translations';
 import { MnistStage } from './MnistStage';
 import { LogisticStage } from './LogisticStage';
 import { ConfusionMatrixStage } from './ConfusionMatrixStage';
+import { KMeansStage } from './KMeansStage';
 import { LessonControlHeader } from './LessonControlHeader';
 import { ALGORITHM_PRESETS } from '../algorithms/presets';
 interface VisualStageProps {
@@ -140,10 +141,12 @@ export const VisualStage: React.FC<VisualStageProps> = ({
   const mnistState = step.state.mnistState;
   const logisticState = step.state.logisticState;
   const confusionMatrixState = step.state.confusionMatrixState;
+  const kmeansState = step.state.kmeansState;
   const smoothKernelR = useSmoothValue(kernelPos.r, 420);
   const currentPreset = useMemo(() => {
     if (preset) return preset;
     if (confusionMatrixState) return ALGORITHM_PRESETS.find((p) => p.id === 'confusion-matrix');
+    if (kmeansState) return ALGORITHM_PRESETS.find((p) => p.id === 'kmeans-clustering');
     if (logisticState) return ALGORITHM_PRESETS.find((p) => p.id === 'logistic-regression');
     if (mnistState) return ALGORITHM_PRESETS.find((p) => p.id === 'mnist-digit-recognition');
     if (modernNeuronState) return ALGORITHM_PRESETS.find((p) => p.id === 'modern-neuron');
@@ -157,7 +160,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
     }
     if (points && points.length > 0) return ALGORITHM_PRESETS.find((p) => p.id === 'linear-regression');
     return null;
-  }, [preset, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
+  }, [preset, kmeansState, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
   const smoothKernelC = useSmoothValue(kernelPos.c, 420);
   // Raw values from trace
   const rawW = step.state.weight !== undefined ? Number(step.state.weight) : 0;
@@ -361,6 +364,19 @@ export const VisualStage: React.FC<VisualStageProps> = ({
           className="w-full h-full flex items-center justify-center transition-transform duration-75"
         >
         {/* ========================================================= */}
+        {/* 0. K-MEANS CLUSTERING (Voronoi Cells, Centroids & WCSS)   */}
+        {/* ========================================================= */}
+        {kmeansState && (
+          <KMeansStage
+            theme={theme}
+            language={language}
+            kmeansState={kmeansState}
+            onChangeInput={onChangeInput}
+            isExpanded={isMaximized}
+          />
+        )}
+
+        {/* ========================================================= */}
         {/* 0. LOGISTIC REGRESSION (Sigmoid S-Curve, Boundary, BCE)   */}
         {/* ========================================================= */}
         {logisticState && (
@@ -389,7 +405,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         {/* ========================================================= */}
         {/* 1. DYNAMIC REGRESSION PLOT (Auto-scaled, Clickable, Clean) */}
         {/* ========================================================= */}
-        {points && points.length > 0 && !logisticState && !confusionMatrixState && (
+        {points && points.length > 0 && !logisticState && !confusionMatrixState && !kmeansState && (
           <div className="w-full h-full relative flex items-center justify-center">
             {/* Top Click-To-Add-Point Hint */}
             <div className="absolute top-1 left-4 z-10 flex items-center gap-1.5 text-[11px] opacity-60 font-sans pointer-events-none">
@@ -1847,7 +1863,15 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         <span className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>{t.activeInvariantModel}:</span>
-          {confusionMatrixState ? (
+          {kmeansState ? (
+            <MathFormula
+              math={
+                step.invariant ||
+                `J = \\sum_{k=1}^K \\sum_{x \\in S_k} \\|x - \\mu_k\\|^2 = ${kmeansState.inertia.toFixed(2)}`
+              }
+              className="ml-1 font-bold text-emerald-600 dark:text-cyan-300"
+            />
+          ) : confusionMatrixState ? (
             <MathFormula
               math={`\\text{Accuracy} = ${(confusionMatrixState.accuracy * 100).toFixed(1)}\\%, \\quad F_1 = ${confusionMatrixState.f1Score.toFixed(3)}`}
               className="ml-1 font-bold text-amber-500 dark:text-cyan-300"

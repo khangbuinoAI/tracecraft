@@ -25,7 +25,8 @@ export type VisualType =
   | 'attention-matrix'
   | 'cnn-convolution'
   | 'mnist-interactive'
-  | 'array-bars';
+  | 'array-bars'
+  | 'kmeans-clustering';
 
 export type StepAction =
   | 'init'
@@ -165,6 +166,41 @@ export interface ConfusionMatrixData {
   costNote?: string;
 }
 
+export interface KMeansPoint {
+  id: number;
+  x: number;
+  y: number;
+  cluster: number; // -1 if unassigned, 0..k-1
+  distanceToCentroid?: number;
+  distances?: number[];
+  label?: string;
+}
+
+export interface KMeansCentroid {
+  id: number;
+  x: number;
+  y: number;
+  prevX?: number;
+  prevY?: number;
+  color: string;
+  count: number;
+}
+
+export interface KMeansState {
+  k: number;
+  iteration: number;
+  maxIterations: number;
+  phase: 'init' | 'assign' | 'update' | 'converged';
+  points: KMeansPoint[];
+  centroids: KMeansCentroid[];
+  inertia: number; // Within-Cluster Sum of Squares (WCSS)
+  prevInertia?: number;
+  centroidShift: number;
+  converged: boolean;
+  activePointId?: number | null;
+  activeClusterId?: number | null;
+}
+
 export type PrimitiveStateValue =
   | string
   | number
@@ -186,7 +222,10 @@ export type PrimitiveStateValue =
   | LogisticState
   | LogisticPoint[]
   | ConfusionMatrixData
-  | ConfusionMatrixSample[];
+  | ConfusionMatrixSample[]
+  | KMeansState
+  | KMeansPoint[]
+  | KMeansCentroid[];
 export interface StepState {
   epoch?: number;
   loss?: number;
@@ -212,6 +251,7 @@ export interface StepState {
   mnistState?: MnistState;
   logisticState?: LogisticState;
   confusionMatrixState?: ConfusionMatrixData;
+  kmeansState?: KMeansState;
   [key: string]: PrimitiveStateValue;
 }
 

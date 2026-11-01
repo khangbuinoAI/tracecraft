@@ -59,6 +59,21 @@ export const RightPanels: React.FC<RightPanelsProps> = ({
       const scenarios = ['scenario=medical', 'scenario=spam', 'scenario=fraud', 'scenario=balanced'];
       const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
       onChangeInput(randomScenario);
+    } else if (preset.visualType === 'kmeans-clustering') {
+      const centers = [
+        { cx: 2.5 + Math.random(), cy: 3.0 + Math.random() },
+        { cx: 7.0 + Math.random(), cy: 7.5 + Math.random() },
+        { cx: 3.0 + Math.random(), cy: 7.5 + Math.random() },
+      ];
+      const randomPoints: string[] = [];
+      centers.forEach((c) => {
+        for (let i = 0; i < 5; i++) {
+          const x = Number((c.cx + (Math.random() - 0.5) * 2.2).toFixed(1));
+          const y = Number((c.cy + (Math.random() - 0.5) * 2.2).toFixed(1));
+          randomPoints.push(`(${x}, ${y})`);
+        }
+      });
+      onChangeInput(randomPoints.join(', '));
     } else {
       const randomArr = Array.from({ length: 5 }, () => Math.floor(Math.random() * 50) + 1);
       onChangeInput(randomArr.join(', '));
