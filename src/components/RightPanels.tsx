@@ -82,6 +82,14 @@ export const RightPanels: React.FC<RightPanelsProps> = ({
       const betas = [0.5, 0.85, 0.9, 0.95];
       const randBeta = betas[Math.floor(Math.random() * betas.length)];
       onChangeInput(`start=(${randW1}, ${randW2}), beta=${randBeta}`);
+    } else if (preset.visualType === 'batch-gradient') {
+      const signX = Math.random() > 0.5 ? 1 : -1;
+      const signY = Math.random() > 0.5 ? 1 : -1;
+      const randW1 = Number(((2.0 + Math.random() * 2.5) * signX).toFixed(2));
+      const randW2 = Number(((1.0 + Math.random() * 1.5) * signY).toFixed(2));
+      const sampleSizes = [8, 12, 16, 24];
+      const randN = sampleSizes[Math.floor(Math.random() * sampleSizes.length)];
+      onChangeInput(`start=(${randW1}, ${randW2}), N=${randN}, lr=0.15`);
     } else {
       const randomArr = Array.from({ length: 5 }, () => Math.floor(Math.random() * 50) + 1);
       onChangeInput(randomArr.join(', '));

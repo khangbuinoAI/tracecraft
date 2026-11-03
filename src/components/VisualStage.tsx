@@ -19,6 +19,7 @@ import { ConfusionMatrixStage } from './ConfusionMatrixStage';
 import { KMeansStage } from './KMeansStage';
 import { MomentumStage } from './MomentumStage';
 import { NesterovStage } from './NesterovStage';
+import { BatchGradientStage } from './BatchGradientStage';
 import { LessonControlHeader } from './LessonControlHeader';
 import { ALGORITHM_PRESETS } from '../algorithms/presets';
 interface VisualStageProps {
@@ -146,11 +147,13 @@ export const VisualStage: React.FC<VisualStageProps> = ({
   const kmeansState = step.state.kmeansState;
   const momentumState = step.state.momentumState;
   const nesterovState = step.state.nesterovState;
+  const batchGradientState = step.state.batchGradientState;
   const smoothKernelR = useSmoothValue(kernelPos.r, 420);
   const currentPreset = useMemo(() => {
     if (preset) return preset;
     if (confusionMatrixState) return ALGORITHM_PRESETS.find((p) => p.id === 'confusion-matrix');
     if (kmeansState) return ALGORITHM_PRESETS.find((p) => p.id === 'kmeans-clustering');
+    if (batchGradientState) return ALGORITHM_PRESETS.find((p) => p.id === 'batch-gradient-descent');
     if (nesterovState) return ALGORITHM_PRESETS.find((p) => p.id === 'nesterov-optimizer');
     if (momentumState) return ALGORITHM_PRESETS.find((p) => p.id === 'momentum-optimizer');
     if (logisticState) return ALGORITHM_PRESETS.find((p) => p.id === 'logistic-regression');
@@ -166,7 +169,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
     }
     if (points && points.length > 0) return ALGORITHM_PRESETS.find((p) => p.id === 'linear-regression');
     return null;
-  }, [preset, nesterovState, momentumState, kmeansState, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
+  }, [preset, batchGradientState, nesterovState, momentumState, kmeansState, confusionMatrixState, logisticState, mnistState, modernNeuronState, neuronState, tokens, inputMatrix, kernel, layers, points]);
   const smoothKernelC = useSmoothValue(kernelPos.c, 420);
   // Raw values from trace
   const rawW = step.state.weight !== undefined ? Number(step.state.weight) : 0;
@@ -396,6 +399,19 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         )}
 
         {/* ========================================================= */}
+        {/* 0. BATCH GRADIENT DESCENT (Exact Full-Batch, σ² = 0)     */}
+        {/* ========================================================= */}
+        {batchGradientState && (
+          <BatchGradientStage
+            theme={theme}
+            language={language}
+            batchGradientState={batchGradientState}
+            onChangeInput={onChangeInput}
+            isExpanded={isMaximized}
+          />
+        )}
+
+        {/* ========================================================= */}
         {/* 0. K-MEANS CLUSTERING (Voronoi Cells, Centroids & WCSS)   */}
         {/* ========================================================= */}
         {kmeansState && (
@@ -437,7 +453,7 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         {/* ========================================================= */}
         {/* 1. DYNAMIC REGRESSION PLOT (Auto-scaled, Clickable, Clean) */}
         {/* ========================================================= */}
-        {points && points.length > 0 && !logisticState && !confusionMatrixState && !kmeansState && !momentumState && !nesterovState && (
+        {points && points.length > 0 && !logisticState && !confusionMatrixState && !kmeansState && !momentumState && !nesterovState && !batchGradientState && (
           <div className="w-full h-full relative flex items-center justify-center">
             {/* Top Click-To-Add-Point Hint */}
             <div className="absolute top-1 left-4 z-10 flex items-center gap-1.5 text-[11px] opacity-60 font-sans pointer-events-none">
@@ -1895,7 +1911,15 @@ export const VisualStage: React.FC<VisualStageProps> = ({
         <span className="flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>{t.activeInvariantModel}:</span>
-          {nesterovState ? (
+          {batchGradientState ? (
+            <MathFormula
+              math={
+                step.invariant ||
+                `\\nabla L(\\theta) = \\frac{1}{N}\\sum_{i=1}^N \\nabla \\ell_i(\\theta), \\quad \\theta_{t+1} = \\theta_t - \\alpha \\nabla L(\\theta)`
+              }
+              className="ml-1 font-bold text-blue-600 dark:text-blue-300"
+            />
+          ) : nesterovState ? (
             <MathFormula
               math={
                 step.invariant ||

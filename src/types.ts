@@ -28,7 +28,8 @@ export type VisualType =
   | 'array-bars'
   | 'kmeans-clustering'
   | 'momentum-optimizer'
-  | 'nesterov-optimizer';
+  | 'nesterov-optimizer'
+  | 'batch-gradient';
 
 export type StepAction =
   | 'init'
@@ -261,6 +262,39 @@ export interface NesterovState {
   converged: boolean;
 }
 
+export interface BatchDataPoint {
+  id: number;
+  x: number;
+  y: number;
+  gradW1: number;
+  gradW2: number;
+}
+
+export interface BatchTrajectoryPoint {
+  step: number;
+  w1: number;
+  w2: number;
+  loss: number;
+  grad1: number;
+  grad2: number;
+}
+
+export interface BatchGradientState {
+  batchSize: number; // N (total samples in full batch)
+  totalSamples: number; // N
+  learningRate: number; // α
+  currentW: [number, number]; // [w1, w2]
+  loss: number;
+  gradient: [number, number]; // exact full-batch gradient [grad1, grad2]
+  batchPath: BatchTrajectoryPoint[]; // Smooth full-batch trajectory
+  sgdPath: BatchTrajectoryPoint[]; // Stochastic GD trajectory for comparison
+  miniBatchPath: BatchTrajectoryPoint[]; // Mini-batch trajectory for comparison
+  sampleGradients: BatchDataPoint[]; // Individual sample gradient vectors
+  iteration: number;
+  maxIterations: number;
+  converged: boolean;
+}
+
 export type PrimitiveStateValue =
   | string
   | number
@@ -289,7 +323,10 @@ export type PrimitiveStateValue =
   | MomentumState
   | MomentumTrajectoryPoint[]
   | NesterovState
-  | NesterovTrajectoryPoint[];
+  | NesterovTrajectoryPoint[]
+  | BatchGradientState
+  | BatchTrajectoryPoint[]
+  | BatchDataPoint[];
 export interface StepState {
   epoch?: number;
   loss?: number;
@@ -318,6 +355,7 @@ export interface StepState {
   kmeansState?: KMeansState;
   momentumState?: MomentumState;
   nesterovState?: NesterovState;
+  batchGradientState?: BatchGradientState;
   [key: string]: PrimitiveStateValue;
 }
 

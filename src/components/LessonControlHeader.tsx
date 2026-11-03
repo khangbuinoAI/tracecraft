@@ -16,6 +16,7 @@ import {
   Target,
   Compass,
   Navigation,
+  Layers,
 } from 'lucide-react';
 import type {
   ThemeMode,
@@ -470,6 +471,44 @@ export const LessonControlHeader: React.FC<LessonControlHeaderProps> = ({
           impact: isVi
             ? 'Momentum cổ điển (Polyak 1964) như một hòn bi mù lao dốc: tích lũy vận tốc lớn nhưng vọt lố qua đáy hẻm và dao động dữ dội. Yurii Nesterov (1983) phát minh cơ chế "nhìn trước": thực hiện bước nhảy quán tính trước θ_ahead = θ - β·v_prev rồi mới tính gradient tại đó! Nếu quán tính đang đẩy hòn bi leo dốc bên kia, gradient nhìn trước lập tức tác dụng lực phanh chủ động, triệt tiêu vọt lố và đạt tốc độ hội tụ tối ưu lý thuyết O(1/t²) (thay vì O(1/t) của SGD/Polyak). Đây là nền tảng của Nadam và huấn luyện mạng sâu!'
             : 'Polyak Momentum (1964) is like a blind rolling ball: accumulating heavy speed but overshooting the valley floor and oscillating before recovering. Yurii Nesterov (1983) introduced anticipatory "look-ahead": leaping forward via momentum θ_ahead = θ - β·v_prev first, then computing the gradient there! If inertia would carry the parameter up the opposite slope, the look-ahead gradient applies immediate counter-braking, preventing overshoot and achieving the optimal O(1/t²) theoretical convergence rate (vs O(1/t) for standard GD/Polyak). Foundational for Nadam and modern deep architectures!',
+        };
+      }
+
+      case 'batch-gradient-descent': {
+        const bgd = step.state.batchGradientState;
+        const nSamples = bgd?.totalSamples ?? 12;
+        const bSize = bgd?.batchSize ?? 12;
+        const lr = bgd?.learningRate ?? 0.15;
+        const w = bgd?.currentW ?? [0, 0];
+        const lossVal = bgd?.loss ?? 0;
+        const grad = bgd?.gradient ?? [0, 0];
+        const gradMag = Math.hypot(grad[0], grad[1]);
+
+        return {
+          icon: <Layers className="w-4 h-4 text-blue-400 animate-pulse" />,
+          title: isVi ? 'Batch Gradient Descent (Toàn Tập)' : 'Batch Gradient Descent (Full Batch)',
+          badge: isVi ? 'Tối ưu Toàn Tập' : 'Full-Batch Optimizer',
+          badgeColor: isDark
+            ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+            : 'bg-blue-100 text-blue-800 border-blue-300',
+          subtitle: (
+            <span>
+              Batch: <strong className="font-mono text-blue-600 dark:text-blue-400">B = {bSize}/{nSamples} (100%)</strong>
+              {' • '}
+              α = <strong className="font-mono text-indigo-600 dark:text-indigo-400">{lr}</strong>
+              {' • '}
+              w = <strong className="font-mono text-slate-700 dark:text-slate-300">({w[0].toFixed(2)}, {w[1].toFixed(2)})</strong>
+              {' • '}
+              Loss: <strong className="font-mono text-rose-600 dark:text-rose-400">{lossVal.toFixed(3)}</strong>
+              {' • '}
+              ‖∇L‖: <strong className="font-mono text-cyan-600 dark:text-cyan-400">{gradMag.toFixed(3)}</strong>
+              {' • '}
+              <strong className="text-emerald-600 dark:text-emerald-400">{isVi ? 'σ² = 0 (Chính xác)' : 'σ² = 0 (Exact)'}</strong>
+            </span>
+          ),
+          impact: isVi
+            ? 'Batch Gradient Descent (BGD) tính trung bình gradient trên toàn bộ N mẫu dữ liệu trong mỗi bước lặp. Nhờ vậy, gradient thu được là nghiệm chính xác của hàm rủi ro thực nghiệm (empirical risk), triệt tiêu hoàn toàn nhiễu lấy mẫu (variance = 0) và đảm bảo quỹ đạo giảm đơn điệu mượt mà. Tuy nhiên, khi dữ liệu mở rộng lên hàng triệu mẫu (ImageNet, LLMs), việc nạp toàn bộ vào bộ nhớ GPU trở nên bất khả thi, mở đường cho Mini-Batch SGD!'
+            : 'Batch Gradient Descent (BGD) computes the true empirical risk gradient across all N samples per parameter update. Averaging all sample gradients completely eliminates sampling variance (σ² = 0), guaranteeing a deterministic, monotonic descent into the minimum without stochastic jitter. However, as datasets scale to millions of tokens or images, full-batch GPU memory saturation necessitates Mini-Batch SGD!',
         };
       }
 

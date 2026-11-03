@@ -10,6 +10,8 @@ import type {
   KMeansCentroid,
   MomentumTrajectoryPoint,
   NesterovTrajectoryPoint,
+  BatchTrajectoryPoint,
+  BatchDataPoint,
 } from '../types';
 import { generateCanonicalDigitGrid, inferMnist } from '../components/MnistStage';
 export const ALGORITHM_PRESETS: AlgorithmPreset[] = [
@@ -2246,6 +2248,357 @@ def nesterov_accelerated_gradient(w_init, lr=0.1, beta=0.9, max_iters=14):
             ? `[Bước ${s} - Phanh Nhìn Trước]: Nhảy trước theo quán tính θ_ahead = (${curPt.lookaheadW1}, ${curPt.lookaheadW2}). Gradient đo tại điểm nhìn trước áp dụng lực phanh, cập nhật vận tốc ‖v‖ = ${vMag.toFixed(3)}. Tham số cập nhật về (${curPt.w1}, ${curPt.w2}) với Loss = ${curPt.loss.toFixed(4)}.`
             : `[Step ${s} - Look-Ahead Braking]: Leaping ahead via momentum to θ_ahead = (${curPt.lookaheadW1}, ${curPt.lookaheadW2}). Gradient evaluated at look-ahead point applies counter-braking, net velocity ‖v‖ = ${vMag.toFixed(3)}. Position updated to (${curPt.w1}, ${curPt.w2}) with Loss = ${curPt.loss.toFixed(4)}.`,
           invariant: `\\theta_{\\text{ahead}} = (${curPt.lookaheadW1}, ${curPt.lookaheadW2}), \\quad v_{${s}} = ${beta} v_{${s - 1}} + ${lr} \\nabla L(\\theta_{\\text{ahead}}), \\quad L = ${curPt.loss.toFixed(4)}`,
+        });
+
+        if (curPt.loss < 0.02) break;
+      }
+
+      const total = steps.length;
+      return steps.map((s, idx) => ({ ...s, step: idx + 1, totalSteps: total }));
+    },
+  },
+  // ==========================================
+  {
+    id: 'batch-gradient-descent',
+    title: '07. Batch Gradient Descent (Full-Batch Optimization)',
+    category: 'Classical Machine Learning',
+    difficulty: 'Beginner',
+    badge: 'Batch Optimizer',
+    visualType: 'batch-gradient',
+    formula: '\\nabla L(\\theta) = \\frac{1}{N}\\sum_{i=1}^N \\nabla \\ell_i(\\theta), \\quad \\theta_{t+1} = \\theta_t - \\alpha \\nabla L(\\theta)',
+    summary: 'Computes the exact gradient averaged across all N training samples per step, guaranteeing monotonic convergence with zero stochastic variance.',
+    description: 'Batch Gradient Descent (BGD), also known as Full-Batch Gradient Descent, evaluates the loss and gradient across the entire dataset of N observations in every single iteration. Because every sample contributes to the gradient vector, individual sample noises cancel out completely, yielding the true mathematical gradient of the empirical risk with zero variance (σ² = 0). This ensures a perfectly smooth, deterministic descent directly towards the minimum. However, processing all N samples per step incurs O(N) computation and high memory demand, inspiring Mini-Batch and Stochastic alternatives for massive modern datasets.',
+    sections: [
+      {
+        title: '1. The Empirical Risk Objective & Full-Batch Formulation',
+        content: 'Machine learning models optimize the empirical risk over a finite training dataset of N points: L_N(θ) = (1/N) * sum(l_i(θ)). By the linearity of differentiation, the gradient of the entire empirical risk is precisely the arithmetic mean of all N individual sample gradients. Batch Gradient Descent processes all N samples concurrently to compute this exact gradient vector on every single step.',
+        formula: '\\nabla L_N(\\theta) = \\frac{1}{N}\\sum_{i=1}^N \\nabla \\ell_i(\\theta), \\quad \\theta_{t+1} = \\theta_t - \\alpha \\nabla L_N(\\theta_t)',
+        keyTakeaway: 'Batch GD computes the true, uncorrupted gradient vector of the empirical risk landscape without sampling noise.',
+      },
+      {
+        title: '2. The Zero-Variance Invariant (σ² = 0) & Monotonic Convergence',
+        content: 'In Stochastic Gradient Descent (SGD), evaluating random individual samples introduces high gradient variance Var(∇l_i) = σ² > 0, causing erratic zigzagging. In Batch Gradient Descent, averaging over the entire dataset forces the sampling variance to zero (σ² = 0 relative to the training set). Under a Lipschitz-continuous gradient and learning rate α ≤ 1/L, the loss is guaranteed to decrease monotonically on every iteration: L(θ_{t+1}) ≤ L(θ_t).',
+        formula: '\\mathbb{E}[\\nabla L_N] = \\nabla L_N, \\quad \\operatorname{Var}(\\nabla L_N) = 0, \\quad L(\\theta_{t+1}) \\le L(\\theta_t) - \\frac{\\alpha}{2}\\|\\nabla L(\\theta_t)\\|^2',
+        keyTakeaway: 'Zero variance guarantees smooth deterministic progress with monotonic loss reduction and no random-walk oscillations.',
+      },
+      {
+        title: '3. Computational Bottleneck: Memory & Hardware Limits',
+        content: 'The primary disadvantage of Batch Gradient Descent is computational: each parameter update requires a full forward pass and backward pass over all N samples (O(N · D) time complexity). When N reaches millions or billions (e.g. ImageNet with 1.4M images or modern LLMs with trillions of tokens), holding all activations in memory exceeds GPU VRAM, making a single full-batch step prohibitively slow.',
+        formula: '\\text{Time per Epoch} = \\mathcal{O}(N \\cdot D), \\quad \\text{VRAM Footprint} = \\mathcal{O}(N \\cdot \\text{Activations})',
+        keyTakeaway: 'Batch GD is ideal for small-to-medium convex problems, but hardware memory bounds prevent full-batch training on modern web-scale data.',
+      },
+      {
+        title: '4. The Gradient Descent Spectrum: Batch vs Mini-Batch vs SGD',
+        content: 'Modern machine learning operates on a continuum defined by batch size B: (1) Batch GD (B = N): exact gradient, smooth trajectory, high memory, slow steps; (2) Stochastic GD (B = 1): fast steps, noisy trajectory, escapes sharp saddle points; (3) Mini-Batch GD (1 < B < N, typically 32–256): the golden standard combining GPU matrix parallelism with stochastic exploration.',
+        formula: 'B = 1 \\text{ (SGD)} \\quad \\longleftrightarrow \\quad 1 < B < N \\text{ (Mini-Batch)} \\quad \\longleftrightarrow \\quad B = N \\text{ (Batch GD)}',
+        keyTakeaway: 'Mini-batch gradient descent bridges the best of both worlds, balancing the mathematical stability of BGD with the computational efficiency of SGD.',
+      },
+    ],
+    timeComplexity: 'O(T · N · D)',
+    spaceComplexity: 'O(N · D) dataset',
+    tags: ['Optimization', 'Batch Gradient Descent', 'BGD', 'Full Batch', 'Empirical Risk', 'SGD Comparison', 'Convex Optimization'],
+    defaultInput: 'start=(4.2, 2.2), N=12, lr=0.15',
+    inputVariants: [
+      {
+        label: 'Standard Dataset (N=12)',
+        value: 'start=(4.2, 2.2), N=12, lr=0.15',
+      },
+      {
+        label: 'Large Dataset (N=24, Ultra Smooth)',
+        value: 'start=(4.2, 2.2), N=24, lr=0.15',
+      },
+      {
+        label: 'Small Dataset (N=6)',
+        value: 'start=(4.2, 2.2), N=6, lr=0.15',
+      },
+      {
+        label: 'High Learning Rate (α=0.25)',
+        value: 'start=(4.2, 2.2), N=12, lr=0.25',
+      },
+    ],
+    vi: {
+      title: '07. Batch Gradient Descent (Tối ưu Hóa Toàn Tập Dữ Liệu)',
+      category: 'Machine Learning Cổ điển',
+      badge: 'Tối ưu Toàn Tập',
+      summary: 'Tính toán gradient chính xác trung bình trên toàn bộ N mẫu dữ liệu trong mỗi bước lặp, đảm bảo hội tụ đơn điệu với phương sai bằng 0.',
+      description: 'Batch Gradient Descent (BGD), còn gọi là Gradient Descent toàn tập (Full-Batch), đánh giá hàm mất mát và gradient trên toàn bộ N mẫu dữ liệu trong mỗi lần cập nhật tham số. Vì mọi mẫu dữ liệu đều đóng góp vào vector gradient, các nhiễu ngẫu nhiên từ từng mẫu triệt tiêu lẫn nhau hoàn toàn, tạo ra vector gradient toán học chính xác của hàm rủi ro thực nghiệm với phương sai bằng 0 (σ² = 0). Điều này đảm bảo quỹ đạo giảm đơn điệu, mượt mà và thẳng tiến về cực tiểu. Tuy nhiên, tính toán toàn tập tốn O(N) phép tính và bộ nhớ lớn, mở đường cho Mini-Batch và Stochastic GD trên các tập dữ liệu khổng lồ.',
+      variants: [
+        {
+          label: 'Tập Chuẩn (N=12 Mẫu)',
+          value: 'start=(4.2, 2.2), N=12, lr=0.15',
+        },
+        {
+          label: 'Tập Lớn (N=24 Mẫu, Gradient Cực Mịn)',
+          value: 'start=(4.2, 2.2), N=24, lr=0.15',
+        },
+        {
+          label: 'Tập Nhỏ (N=6 Mẫu)',
+          value: 'start=(4.2, 2.2), N=6, lr=0.15',
+        },
+        {
+          label: 'Tốc độ Học Cao (α=0.25)',
+          value: 'start=(4.2, 2.2), N=12, lr=0.25',
+        },
+      ],
+      sections: [
+        {
+          title: '1. Hàm Rủi ro Thực nghiệm & Công thức Toàn Tập (Full-Batch)',
+          content: 'Trong Machine Learning, mục tiêu tối ưu là hàm rủi ro thực nghiệm trên N điểm dữ liệu huấn luyện: L_N(θ) = (1/N) * ∑ l_i(θ). Nhờ tính tuyến tính của phép lấy đạo hàm, gradient của toàn bộ tập dữ liệu chính là trung bình cộng của N vector gradient riêng lẻ từng mẫu. Batch Gradient Descent duyệt qua toàn bộ N mẫu đồng thời để tính vector gradient chính xác tuyệt đối này.',
+          formula: '\\nabla L_N(\\theta) = \\frac{1}{N}\\sum_{i=1}^N \\nabla \\ell_i(\\theta), \\quad \\theta_{t+1} = \\theta_t - \\alpha \\nabla L_N(\\theta_t)',
+          keyTakeaway: 'Batch GD tính vector dốc thực sự của bề mặt hàm mất mát, không hề bị sai lệch hay nhiễu do lấy mẫu ngẫu nhiên.',
+        },
+        {
+          title: '2. Bất biến Phương sai Bằng 0 (σ² = 0) & Sự Hội tụ Đơn điệu',
+          content: 'Trong SGD thuần, việc chỉ lấy 1 mẫu ngẫu nhiên gây ra phương sai gradient lớn Var(∇l_i) = σ² > 0, khiến đường đi ngoằn ngoèo rung lắc. Trong Batch GD, trung bình trên toàn bộ N mẫu triệt tiêu phương sai này (σ² = 0). Khi chọn tốc độ học α ≤ 1/L thích hợp, giá trị hàm mất mát được bảo đảm giảm đơn điệu sau mỗi bước: L(θ_{t+1}) ≤ L(θ_t), không bao giờ có hiện tượng nhảy lùi do nhiễu mẫu.',
+          formula: '\\mathbb{E}[\\nabla L_N] = \\nabla L_N, \\quad \\operatorname{Var}(\\nabla L_N) = 0, \\quad L(\\theta_{t+1}) \\le L(\\theta_t) - \\frac{\\alpha}{2}\\|\\nabla L(\\theta_t)\\|^2',
+          keyTakeaway: 'Phương sai bằng 0 đảm bảo quá trình tối ưu diễn ra êm ả, ổn định tuyệt đối và hội tụ thẳng tắp về cực tiểu.',
+        },
+        {
+          title: '3. Nút Thắt Hiệu Năng: Giới hạn Bộ nhớ & Độ Phức tạp',
+          content: 'Nhược điểm lớn nhất của Batch Gradient Descent là chi phí tính toán: mỗi bước cập nhật đòi hỏi một lượt lan truyền xuôi và ngược qua toàn bộ N mẫu dữ liệu (độ phức tạp thời gian O(N · D)). Khi N lên đến hàng triệu hay hàng tỷ mẫu (như ImageNet 1.4 triệu ảnh hay LLM hàng nghìn tỷ token), bộ nhớ GPU VRAM không thể chứa nổi toàn bộ dữ liệu, khiến một bước lặp đơn lẻ trở nên quá đắt đỏ.',
+          formula: '\\text{Thời gian/Epoch} = \\mathcal{O}(N \\cdot D), \\quad \\text{Bộ nhớ VRAM} = \\mathcal{O}(N \\cdot \\text{Activations})',
+          keyTakeaway: 'Batch GD rất xuất sắc trên dữ liệu vừa và nhỏ, nhưng bất khả thi khi huấn luyện mô hình sâu trên dữ liệu quy mô Internet.',
+        },
+        {
+          title: '4. Phổ Thuật toán: So sánh Batch GD, Mini-Batch GD và SGD',
+          content: 'Các thuật toán tối ưu hiện đại phân bố trên dải quang phổ theo kích thước batch B: (1) Batch GD (B = N): gradient chuẩn xác, đường đi mượt, tốn RAM, dễ kẹt ở cực tiểu cục bộ nhọn; (2) Stochastic GD (B = 1): bước tính cực nhanh, đường đi nhiễu, dễ thoát khỏi điểm yên ngựa; (3) Mini-Batch GD (1 < B < N, thường là 32–256): tiêu chuẩn vàng dung hòa năng lực tính toán song song của GPU và tính ngẫu nhiên khám phá.',
+          formula: 'B = 1 \\text{ (SGD)} \\quad \\longleftrightarrow \\quad 1 < B < N \\text{ (Mini-Batch)} \\quad \\longleftrightarrow \\quad B = N \\text{ (Batch GD)}',
+          keyTakeaway: 'Mini-Batch GD là sự kết hợp hoàn hảo, kế thừa độ ổn định của Batch GD và tốc độ linh hoạt của SGD.',
+        },
+      ],
+    },
+    pythonCode: `import numpy as np
+
+def batch_gradient_descent(X, y, w_init, lr=0.15, max_iters=14):
+    N = len(X)
+    w = np.array(w_init, dtype=float)
+    path = []
+
+    for step in range(max_iters):
+        # 1. Forward pass over ALL N training samples
+        y_pred = X @ w
+        
+        # 2. Compute exact mean squared loss
+        loss = (0.5 / N) * np.sum((y_pred - y) ** 2)
+        
+        # 3. Exact full-batch gradient: (1/N) * X^T (y_pred - y)
+        grad = (1.0 / N) * (X.T @ (y_pred - y))
+        
+        # 4. Deterministic parameter update (zero variance)
+        w = w - lr * grad
+        path.append((w.copy(), loss, grad.copy()))
+        
+        if np.linalg.norm(grad) < 1e-3:
+            break
+
+    return w, path`,
+    code: `import numpy as np
+
+def batch_gradient_descent(X, y, w_init, lr=0.15, max_iters=14):
+    N = len(X)
+    w = np.array(w_init, dtype=float)
+    for step in range(max_iters):
+        y_pred = X @ w                          # 1. Forward pass all N samples
+        loss = (0.5 / N) * np.sum((y_pred - y)**2) # 2. Full empirical loss
+        grad = (1.0 / N) * (X.T @ (y_pred - y)) # 3. Exact full-batch gradient
+        w = w - lr * grad                       # 4. Zero-variance update
+        if np.linalg.norm(grad) < 1e-3:
+            break
+    return w, loss`,
+    generateTraces: (inputStr?: string, lang: Language = 'en'): TraceStep[] => {
+      const isVi = lang === 'vi';
+
+      let startW: [number, number] = [4.2, 2.2];
+      let N = 12;
+      let lr = 0.15;
+
+      if (inputStr) {
+        const startMatch = inputStr.match(/start\s*=\s*\(?\s*([-0-9.]+)\s*[,:]\s*([-0-9.]+)\s*\)?/);
+        if (startMatch) {
+          startW = [Number(startMatch[1]), Number(startMatch[2])];
+        }
+        const nMatch = inputStr.match(/N\s*=\s*([0-9]+)/);
+        if (nMatch) {
+          N = Math.max(4, Math.min(32, Number(nMatch[1])));
+        }
+        const lrMatch = inputStr.match(/lr\s*=\s*([0-9.]+)/);
+        if (lrMatch) {
+          lr = Number(lrMatch[1]);
+        }
+      }
+
+      const maxSteps = 12;
+
+      // Generate fixed sample perturbations for the N data points such that their sum is 0
+      // This guarantees sum(delta_i) = 0, so mean(grad_i) == exact full-batch gradient [w1, 4*w2]
+      const sampleOffsets: [number, number][] = [];
+      for (let i = 0; i < N; i++) {
+        const angle = (2 * Math.PI * i) / N;
+        const radius = 1.2 + 0.6 * Math.sin(3 * angle);
+        const off1 = Number((radius * Math.cos(angle)).toFixed(3));
+        const off2 = Number((radius * Math.sin(angle) * 1.5).toFixed(3));
+        sampleOffsets.push([off1, off2]);
+      }
+
+      // Normalize offsets so mean is strictly 0
+      const meanOff1 = sampleOffsets.reduce((acc, o) => acc + o[0], 0) / N;
+      const meanOff2 = sampleOffsets.reduce((acc, o) => acc + o[1], 0) / N;
+      for (let i = 0; i < N; i++) {
+        sampleOffsets[i][0] -= meanOff1;
+        sampleOffsets[i][1] -= meanOff2;
+      }
+
+      // Helper to compute sample gradients at any parameter position
+      const computeSampleGradients = (w1: number, w2: number): BatchDataPoint[] => {
+        return sampleOffsets.map((off, idx) => ({
+          id: idx + 1,
+          x: off[0],
+          y: off[1],
+          gradW1: Number((w1 + off[0]).toFixed(3)),
+          gradW2: Number((4 * w2 + off[1]).toFixed(3)),
+        }));
+      };
+
+      // 1. Precompute Full Batch GD Trajectory (Exact gradient [w1, 4*w2])
+      const fullBatchPath: BatchTrajectoryPoint[] = [];
+      let curW1 = startW[0];
+      let curW2 = startW[1];
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (curW1 * curW1 + 4 * curW2 * curW2);
+        const g1 = curW1;
+        const g2 = 4 * curW2;
+        fullBatchPath.push({
+          step: s,
+          w1: Number(curW1.toFixed(3)),
+          w2: Number(curW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          grad1: Number(g1.toFixed(3)),
+          grad2: Number(g2.toFixed(3)),
+        });
+        curW1 -= lr * g1;
+        curW2 -= lr * g2;
+      }
+
+      // 2. Precompute Stochastic GD Trajectory (B = 1, single noisy sample per step)
+      const fullSgdPath: BatchTrajectoryPoint[] = [];
+      let sgdW1 = startW[0];
+      let sgdW2 = startW[1];
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (sgdW1 * sgdW1 + 4 * sgdW2 * sgdW2);
+        const sampleIdx = (s * 5 + 1) % N;
+        const g1 = sgdW1 + sampleOffsets[sampleIdx][0];
+        const g2 = 4 * sgdW2 + sampleOffsets[sampleIdx][1];
+        fullSgdPath.push({
+          step: s,
+          w1: Number(sgdW1.toFixed(3)),
+          w2: Number(sgdW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          grad1: Number(g1.toFixed(3)),
+          grad2: Number(g2.toFixed(3)),
+        });
+        sgdW1 -= (lr * 0.8) * g1;
+        sgdW2 -= (lr * 0.8) * g2;
+      }
+
+      // 3. Precompute Mini-Batch GD Trajectory (B = 4)
+      const fullMiniBatchPath: BatchTrajectoryPoint[] = [];
+      let mbW1 = startW[0];
+      let mbW2 = startW[1];
+      const mbSize = 4;
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (mbW1 * mbW1 + 4 * mbW2 * mbW2);
+        let sumG1 = 0;
+        let sumG2 = 0;
+        for (let k = 0; k < mbSize; k++) {
+          const idx = (s * 3 + k) % N;
+          sumG1 += mbW1 + sampleOffsets[idx][0];
+          sumG2 += 4 * mbW2 + sampleOffsets[idx][1];
+        }
+        const avgG1 = sumG1 / mbSize;
+        const avgG2 = sumG2 / mbSize;
+        fullMiniBatchPath.push({
+          step: s,
+          w1: Number(mbW1.toFixed(3)),
+          w2: Number(mbW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          grad1: Number(avgG1.toFixed(3)),
+          grad2: Number(avgG2.toFixed(3)),
+        });
+        mbW1 -= lr * avgG1;
+        mbW2 -= lr * avgG2;
+      }
+
+      const steps: TraceStep[] = [];
+
+      // Step 0: Initialization
+      const initPoint = fullBatchPath[0];
+      steps.push({
+        step: 0,
+        totalSteps: 0,
+        line: 5,
+        action: 'init',
+        targets: [],
+        state: {
+          loss: initPoint.loss,
+          batchGradientState: {
+            batchSize: N,
+            totalSamples: N,
+            learningRate: lr,
+            currentW: [initPoint.w1, initPoint.w2],
+            loss: initPoint.loss,
+            gradient: [initPoint.grad1, initPoint.grad2],
+            batchPath: [initPoint],
+            sgdPath: [fullSgdPath[0]],
+            miniBatchPath: [fullMiniBatchPath[0]],
+            sampleGradients: computeSampleGradients(initPoint.w1, initPoint.w2),
+            iteration: 0,
+            maxIterations: maxSteps,
+            converged: false,
+          },
+        },
+        explanation: isVi
+          ? `[Khởi tạo Batch GD]: Điểm xuất phát w₀ = (${initPoint.w1}, ${initPoint.w2}). Kích thước tập dữ liệu N = ${N} mẫu (Batch Size B = ${N}). Tốc độ học α = ${lr}. Phương sai lấy mẫu σ² = 0.`
+          : `[Batch GD Init]: Starting parameters w₀ = (${initPoint.w1}, ${initPoint.w2}). Full dataset size N = ${N} samples (Batch Size B = ${N}). Learning rate α = ${lr}. Sampling variance σ² = 0.`,
+        invariant: `B = N = ${N}, \\quad w_0 = (${initPoint.w1}, ${initPoint.w2}), \\quad \\sigma^2 = 0`,
+      });
+
+      for (let s = 1; s <= maxSteps; s++) {
+        const curPt = fullBatchPath[s];
+        const gMag = Math.hypot(curPt.grad1, curPt.grad2);
+        const isLast = s === maxSteps || curPt.loss < 0.03;
+
+        steps.push({
+          step: 0,
+          totalSteps: 0,
+          line: isLast ? 13 : 10,
+          action: isLast ? 'done' : 'update',
+          targets: [],
+          state: {
+            loss: curPt.loss,
+            batchGradientState: {
+              batchSize: N,
+              totalSamples: N,
+              learningRate: lr,
+              currentW: [curPt.w1, curPt.w2],
+              loss: curPt.loss,
+              gradient: [curPt.grad1, curPt.grad2],
+              batchPath: fullBatchPath.slice(0, s + 1),
+              sgdPath: fullSgdPath.slice(0, s + 1),
+              miniBatchPath: fullMiniBatchPath.slice(0, s + 1),
+              sampleGradients: computeSampleGradients(curPt.w1, curPt.w2),
+              iteration: s,
+              maxIterations: maxSteps,
+              converged: isLast,
+            },
+          },
+          explanation: isLast
+            ? isVi
+              ? `[Hội tụ Hoàn tất]: Sau ${s} epoch, Batch GD đã dẫn dắt tham số tiệm cận cực tiểu toàn cục w* = (0, 0) với Loss = ${curPt.loss.toFixed(4)}. So với SGD (đường đỏ ngoằn ngoèo do nhiễu phương sai), quỹ đạo Batch GD thẳng tắp và giảm đơn điệu hoàn hảo!`
+              : `[Convergence Complete]: After ${s} epochs, Batch GD guided parameters near global minimum w* = (0, 0) with Loss = ${curPt.loss.toFixed(4)}. Unlike SGD (noisy red path with high variance), Batch GD descends straight down with monotonic stability!`
+            : isVi
+            ? `[Bước ${s} - Cập nhật Toàn Tập]: Trung bình gradient trên toàn bộ ${N} mẫu triệt tiêu nhiễu mẫu hoàn toàn (σ² = 0). Gradient toàn tập ‖∇L‖ = ${gMag.toFixed(3)}, cập nhật w = (${curPt.w1}, ${curPt.w2}) với Loss giảm xuống ${curPt.loss.toFixed(4)}.`
+            : `[Step ${s} - Full-Batch Update]: Averaging gradients across all ${N} samples eliminates sample noise completely (σ² = 0). Exact batch gradient ‖∇L‖ = ${gMag.toFixed(3)}, parameters updated to (${curPt.w1}, ${curPt.w2}) with Loss reduced to ${curPt.loss.toFixed(4)}.`,
+          invariant: `\\nabla L(w) = \\frac{1}{${N}}\\sum_{i=1}^{${N}} \\nabla \\ell_i, \\quad w_{${s}} = w_{${s - 1}} - ${lr} \\nabla L, \\quad L = ${curPt.loss.toFixed(4)}`,
         });
 
         if (curPt.loss < 0.02) break;
