@@ -27,7 +27,8 @@ export type VisualType =
   | 'mnist-interactive'
   | 'array-bars'
   | 'kmeans-clustering'
-  | 'momentum-optimizer';
+  | 'momentum-optimizer'
+  | 'nesterov-optimizer';
 
 export type StepAction =
   | 'init'
@@ -228,6 +229,38 @@ export interface MomentumState {
   converged: boolean;
 }
 
+export interface NesterovTrajectoryPoint {
+  step: number;
+  w1: number;
+  w2: number;
+  loss: number;
+  v1?: number;
+  v2?: number;
+  lookaheadW1?: number;
+  lookaheadW2?: number;
+  lookaheadLoss?: number;
+  grad1?: number; // gradient at lookahead position
+  grad2?: number;
+}
+
+export interface NesterovState {
+  beta: number; // Momentum coefficient β ∈ [0, 1)
+  learningRate: number; // α
+  currentW: [number, number]; // [w1, w2]
+  loss: number;
+  lookaheadW: [number, number]; // [w1_ahead, w2_ahead]
+  lookaheadLoss: number;
+  velocity: [number, number]; // [v1, v2]
+  lookaheadGradient: [number, number]; // [grad1, grad2]
+  nesterovPath: NesterovTrajectoryPoint[];
+  polyakPath: MomentumTrajectoryPoint[]; // Classical Polyak momentum comparison
+  vanillaPath: MomentumTrajectoryPoint[]; // Vanilla SGD comparison
+  surfaceType: 'ravine' | 'saddle' | 'beale' | 'plateau';
+  iteration: number;
+  maxIterations: number;
+  converged: boolean;
+}
+
 export type PrimitiveStateValue =
   | string
   | number
@@ -254,7 +287,9 @@ export type PrimitiveStateValue =
   | KMeansPoint[]
   | KMeansCentroid[]
   | MomentumState
-  | MomentumTrajectoryPoint[];
+  | MomentumTrajectoryPoint[]
+  | NesterovState
+  | NesterovTrajectoryPoint[];
 export interface StepState {
   epoch?: number;
   loss?: number;
@@ -282,6 +317,7 @@ export interface StepState {
   confusionMatrixState?: ConfusionMatrixData;
   kmeansState?: KMeansState;
   momentumState?: MomentumState;
+  nesterovState?: NesterovState;
   [key: string]: PrimitiveStateValue;
 }
 

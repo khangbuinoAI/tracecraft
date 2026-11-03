@@ -74,12 +74,12 @@ export const RightPanels: React.FC<RightPanelsProps> = ({
         }
       });
       onChangeInput(randomPoints.join(', '));
-    } else if (preset.visualType === 'momentum-optimizer') {
+    } else if (preset.visualType === 'momentum-optimizer' || preset.visualType === 'nesterov-optimizer') {
       const signX = Math.random() > 0.5 ? 1 : -1;
       const signY = Math.random() > 0.5 ? 1 : -1;
       const randW1 = Number(((2.5 + Math.random() * 2.5) * signX).toFixed(2));
       const randW2 = Number(((1.2 + Math.random() * 1.5) * signY).toFixed(2));
-      const betas = [0.0, 0.5, 0.9, 0.95];
+      const betas = [0.5, 0.85, 0.9, 0.95];
       const randBeta = betas[Math.floor(Math.random() * betas.length)];
       onChangeInput(`start=(${randW1}, ${randW2}), beta=${randBeta}`);
     } else {

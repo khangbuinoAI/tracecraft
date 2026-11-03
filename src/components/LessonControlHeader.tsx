@@ -15,6 +15,7 @@ import {
   BrainCircuit,
   Target,
   Compass,
+  Navigation,
 } from 'lucide-react';
 import type {
   ThemeMode,
@@ -429,6 +430,46 @@ export const LessonControlHeader: React.FC<LessonControlHeaderProps> = ({
           impact: isVi
             ? 'SGD thuần gặp "bệnh nan y" khi đi qua hẻm núi (ravine): dao động dữ dội qua lại giữa hai sườn dốc hẹp mà hầu như không tiến được về phía trước. Thuật toán Heavy-Ball của Polyak (1964) mô phỏng một hòn bi có khối lượng và quán tính vật lý: tích lũy vận tốc v_t theo các hướng dốc ổn định và triệt tiêu các dao động ngược chiều, giúp tăng tốc độ hội tụ gấp 10 lần (1/(1-β))!'
             : 'Vanilla SGD struggles in ravines: oscillating violently across steep narrow walls while making negligible progress along the flat base. Boris Polyak’s Heavy-Ball Momentum (1964) simulates physical inertia: accumulating velocity v_t in consistent directions while averaging out alternating oscillations, accelerating convergence up to 10× (1/(1-β))!',
+        };
+      }
+
+      case 'nesterov-optimizer': {
+        const nag = step.state.nesterovState;
+        const betaVal = nag?.beta ?? 0.9;
+        const lr = nag?.learningRate ?? 0.1;
+        const w = nag?.currentW ?? [0, 0];
+        const lookahead = nag?.lookaheadW ?? [0, 0];
+        const lossVal = nag?.loss ?? 0;
+        const vel = nag?.velocity ?? [0, 0];
+        const velMag = Math.hypot(vel[0], vel[1]);
+
+        return {
+          icon: <Navigation className="w-4 h-4 text-emerald-400 animate-pulse" />,
+          title: isVi ? 'Gia tốc Nesterov (NAG - Nhìn Trước)' : 'Nesterov Accelerated Gradient (NAG)',
+          badge: isVi ? 'Tối ưu Hóa Nhìn Trước' : 'Look-Ahead Optimizer',
+          badgeColor: isDark
+            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+            : 'bg-emerald-100 text-emerald-800 border-emerald-300',
+          subtitle: (
+            <span>
+              β = <strong className="font-mono text-emerald-600 dark:text-emerald-400">{betaVal}</strong>
+              {' • '}
+              α = <strong className="font-mono text-indigo-600 dark:text-indigo-400">{lr}</strong>
+              {' • '}
+              θ = <strong className="font-mono text-slate-700 dark:text-slate-300">({w[0].toFixed(2)}, {w[1].toFixed(2)})</strong>
+              {' • '}
+              {isVi ? 'Nhìn trước:' : 'Ahead:'}{' '}
+              <strong className="font-mono text-amber-600 dark:text-amber-400">({lookahead[0].toFixed(2)}, {lookahead[1].toFixed(2)})</strong>
+              {' • '}
+              Loss: <strong className="font-mono text-rose-600 dark:text-rose-400">{lossVal.toFixed(3)}</strong>
+              {' • '}
+              {isVi ? 'Vận tốc ‖v‖:' : 'Speed ‖v‖:'}{' '}
+              <strong className="font-mono text-cyan-600 dark:text-cyan-400">{velMag.toFixed(3)}</strong>
+            </span>
+          ),
+          impact: isVi
+            ? 'Momentum cổ điển (Polyak 1964) như một hòn bi mù lao dốc: tích lũy vận tốc lớn nhưng vọt lố qua đáy hẻm và dao động dữ dội. Yurii Nesterov (1983) phát minh cơ chế "nhìn trước": thực hiện bước nhảy quán tính trước θ_ahead = θ - β·v_prev rồi mới tính gradient tại đó! Nếu quán tính đang đẩy hòn bi leo dốc bên kia, gradient nhìn trước lập tức tác dụng lực phanh chủ động, triệt tiêu vọt lố và đạt tốc độ hội tụ tối ưu lý thuyết O(1/t²) (thay vì O(1/t) của SGD/Polyak). Đây là nền tảng của Nadam và huấn luyện mạng sâu!'
+            : 'Polyak Momentum (1964) is like a blind rolling ball: accumulating heavy speed but overshooting the valley floor and oscillating before recovering. Yurii Nesterov (1983) introduced anticipatory "look-ahead": leaping forward via momentum θ_ahead = θ - β·v_prev first, then computing the gradient there! If inertia would carry the parameter up the opposite slope, the look-ahead gradient applies immediate counter-braking, preventing overshoot and achieving the optimal O(1/t²) theoretical convergence rate (vs O(1/t) for standard GD/Polyak). Foundational for Nadam and modern deep architectures!',
         };
       }
 

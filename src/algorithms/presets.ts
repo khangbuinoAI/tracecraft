@@ -9,6 +9,7 @@ import type {
   KMeansPoint,
   KMeansCentroid,
   MomentumTrajectoryPoint,
+  NesterovTrajectoryPoint,
 } from '../types';
 import { generateCanonicalDigitGrid, inferMnist } from '../components/MnistStage';
 export const ALGORITHM_PRESETS: AlgorithmPreset[] = [
@@ -1899,6 +1900,352 @@ def momentum_sgd(w_init, lr=0.1, beta=0.9, max_iters=15):
             ? `[Bước ${s} - Tích lũy Quán tính]: Vector vận tốc v_${s} = β·v_${s - 1} + α·∇L tích lũy động lượng dọc theo trục w₁, triệt tiêu dao động trên trục w₂. Vận tốc ‖v‖ = ${vMag.toFixed(3)}, Loss giảm còn ${curPt.loss.toFixed(4)}.`
             : `[Step ${s} - Velocity Accumulation]: Velocity vector v_${s} = β·v_${s - 1} + α·∇L accelerates along the w₁ floor while canceling transverse w₂ oscillations. Speed ‖v‖ = ${vMag.toFixed(3)}, Loss reduced to ${curPt.loss.toFixed(4)}.`,
           invariant: `v_{${s}} = ${beta} v_{${s - 1}} + ${lr} \\nabla L, \\quad L = ${curPt.loss.toFixed(4)}`,
+        });
+
+        if (curPt.loss < 0.02) break;
+      }
+
+      const total = steps.length;
+      return steps.map((s, idx) => ({ ...s, step: idx + 1, totalSteps: total }));
+    },
+  },
+  // ==========================================
+  {
+    id: 'nesterov-optimizer',
+    title: '06. Nesterov Accelerated Gradient (NAG - Look-ahead Momentum)',
+    category: 'Classical Machine Learning',
+    difficulty: 'Advanced',
+    badge: 'Look-ahead Optimizer',
+    visualType: 'nesterov-optimizer',
+    formula: '\\theta_{\\text{ahead}} = \\theta_t - \\beta v_{t-1}, \\quad v_t = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_{\\text{ahead}}), \\quad \\theta_{t+1} = \\theta_t - v_t',
+    summary: 'Eliminates momentum overshoot and achieves theoretical optimal O(1/k²) convergence by evaluating gradients at an anticipatory look-ahead position.',
+    description: 'Classical Polyak Momentum models a blind rolling ball that builds immense velocity but repeatedly overshoots sharp ravines and valley floors. Yurii Nesterov (1983) introduced an anticipatory look-ahead mechanism: first take the momentum leap θ_ahead = θ_t - β*v_{t-1}, then measure the gradient at that predicted future point. If momentum carries the parameter up an opposite slope, the look-ahead gradient applies immediate counter-braking before overshooting occurs. This achieves the optimal O(1/k²) theoretical convergence rate for smooth convex functions, forming the backbone of modern optimizers like Nadam.',
+    sections: [
+      {
+        title: '1. The Pathology of Blind Momentum (Overshoot & Ringing)',
+        content: 'While Polyak Heavy-Ball momentum speeds up progress down flat ravines by accumulating velocity, it is inherently "blind": it computes the gradient at the current position θ_t before applying the momentum leap. When approaching the bottom of a steep valley or a sharp turn, the accumulated momentum carries the parameter high up the opposite slope before the gradient can reverse direction, causing excessive oscillations and ringing.',
+        formula: 'L(w_1, w_2) = \\frac{1}{2}(w_1^2 + 10 w_2^2), \\quad v_t^{\\text{Polyak}} = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t), \\quad \\theta_{t+1} = \\theta_t - v_t',
+        keyTakeaway: 'Blind momentum calculates forces too late: momentum pushes parameters past the optimum, requiring wasteful corrective oscillations to recover.',
+      },
+      {
+        title: "2. Nesterov's Look-Ahead Formulation & Anticipatory Braking",
+        content: 'Yurii Nesterov (1983) corrected this pathology by reversing the order of operations. First, make an exploratory momentum jump to the anticipated position θ_ahead = θ_t - β*v_{t-1}. Then, evaluate the gradient at θ_ahead. If the momentum is about to push the ball up an adverse incline, ∇L(θ_ahead) points downhill in the opposite direction, acting as an automatic anticipatory brake that decelerates velocity before the overshoot occurs.',
+        formula: '\\theta_{\\text{ahead}} = \\theta_t - \\beta v_{t-1}, \\quad v_t = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_{\\text{ahead}}), \\quad \\theta_{t+1} = \\theta_t - v_t',
+        keyTakeaway: 'The look-ahead gradient acts as a smart predictive braking system: it senses oncoming uphill slopes and damps velocity in advance.',
+      },
+      {
+        title: '3. Optimal Convergence Rate: O(1/k²) vs O(1/k)',
+        content: 'For L-smooth convex functions, standard Gradient Descent and Polyak Momentum achieve a theoretical convergence rate of O(1/k). In 1983, Yurii Nesterov proved that the theoretical lower bound for any black-box first-order optimization method is Ω(1/k²), and demonstrated that NAG achieves this optimal bound! To reach an error tolerance ε, NAG requires O(1/√ε) iterations compared to O(1/ε) for standard GD—a quadratic speedup.',
+        formula: 'f(\\theta_k) - f^* \\le \\frac{2 L \\|\\theta_0 - \\theta^*\\|^2}{(k + 1)^2} = \\mathcal{O}\\left(\\frac{1}{k^2}\\right) \\quad \\longleftrightarrow \\quad \\text{Standard GD: } \\mathcal{O}\\left(\\frac{1}{k}\\right)',
+        keyTakeaway: 'NAG is mathematically optimal: no first-order gradient method using only function values and gradients can converge faster on smooth convex objectives.',
+      },
+      {
+        title: '4. Deep Learning & Modern Adaptive Optimizers (Nadam)',
+        content: 'In 2013, Sutskever et al. demonstrated that Nesterov momentum is crucial for training deep neural networks and recurrent models, navigating narrow non-convex gorges where standard momentum destabilizes. Combining NAG with adaptive second-moment learning rates (Adam) gave rise to Nadam (Dozat, 2016), which applies the look-ahead update directly to the first-moment vector m_t for accelerated deep transformer training.',
+        formula: 'm_t = \\beta_1 m_{t-1} + (1 - \\beta_1) g_t, \\quad \\bar{m}_t = \\beta_1 m_t + (1 - \\beta_1) g_t, \\quad \\theta_{t+1} = \\theta_t - \\frac{\\alpha}{\\sqrt{\\hat{v}_t} + \\epsilon} \\frac{\\bar{m}_t}{1 - \\beta_1^t}',
+        keyTakeaway: 'Nesterov look-ahead provides the stability needed to train deep architectures at high learning rates without catastrophic divergence.',
+      },
+    ],
+    timeComplexity: 'O(T · D)',
+    spaceComplexity: 'O(D) velocity state',
+    tags: ['Optimization', 'Nesterov', 'NAG', 'Accelerated Gradient', 'Momentum', 'Braking', 'Convex Optimization', 'Nadam'],
+    defaultInput: 'start=(4.5, 1.8), beta=0.9, lr=0.1',
+    inputVariants: [
+      {
+        label: 'Sharp Ravine (β=0.9)',
+        value: 'start=(4.5, 1.8), beta=0.9, lr=0.1',
+      },
+      {
+        label: 'Heavy Inertia Overshoot (β=0.95)',
+        value: 'start=(4.5, 1.8), beta=0.95, lr=0.1',
+      },
+      {
+        label: 'Moderate Damping (β=0.6)',
+        value: 'start=(4.5, 1.8), beta=0.6, lr=0.1',
+      },
+      {
+        label: 'Near-Symmetric Valley (β=0.85)',
+        value: 'start=(4.0, 2.5), beta=0.85, lr=0.1',
+      },
+    ],
+    vi: {
+      title: '06. Gradient Gia tốc Nesterov (NAG - Tối ưu Hóa Nhìn Trước)',
+      category: 'Machine Learning Cổ điển',
+      badge: 'Tối ưu Hóa Nhìn Trước',
+      summary: 'Gia tốc Gradient Descent và triệt tiêu vọt lố quán tính bằng cơ chế đánh giá gradient tại vị trí dự đoán tương lai, đạt tốc độ hội tụ tối ưu lý thuyết O(1/k²).',
+      description: 'Momentum cổ điển của Boris Polyak (1964) mô phỏng một hòn bi mù lăn xuống dốc: tích lũy vận tốc rất lớn nhưng liên tục vọt lố qua đáy hẻm núi (ravine) và dao động qua lại. Yurii Nesterov (1983) đã tạo nên bước ngoặt lịch sử cho giải tích tối ưu bằng cơ chế "nhìn trước": thực hiện bước nhảy quán tính trước θ_ahead = θ_t - β*v_{t-1}, sau đó đo gradient tại điểm tương lai này. Nếu đà quán tính sắp đẩy hòn bi leo dốc đối diện, gradient nhìn trước sẽ tác dụng lực phanh chủ động ghìm tốc độ lại ngay trước khi vọt lố. Thuật toán đạt tốc độ hội tụ tối ưu lý thuyết O(1/k²) cho hàm lồi trơn—là nền tảng cho trình tối ưu Nadam và các mạng nơ-ron sâu.',
+      variants: [
+        {
+          label: 'Hẻm Dốc Sâu (β=0.9)',
+          value: 'start=(4.5, 1.8), beta=0.9, lr=0.1',
+        },
+        {
+          label: 'Thử nghiệm Vọt lố Quán tính Cao (β=0.95)',
+          value: 'start=(4.5, 1.8), beta=0.95, lr=0.1',
+        },
+        {
+          label: 'Hãm Vừa phải (β=0.6)',
+          value: 'start=(4.5, 1.8), beta=0.6, lr=0.1',
+        },
+        {
+          label: 'Thung lũng Gần Đối xứng (β=0.85)',
+          value: 'start=(4.0, 2.5), beta=0.85, lr=0.1',
+        },
+      ],
+      sections: [
+        {
+          title: '1. Bệnh Nan y "Vọt Lố Quán tính" của Momentum Cổ điển',
+          content: 'Mặc dù thuật toán Heavy-Ball của Polyak tăng tốc rất tốt dọc theo đáy thung lũng phẳng nhờ tích lũy vận tốc, nó mang bản chất "mù quáng": tính gradient tại vị trí hiện tại θ_t trước khi áp dụng bước nhảy quán tính. Khi tiến gần đáy thung lũng hẹp hoặc góc cua gắt, quán tính tích lũy đẩy tham số vọt tít lên sườn dốc bên kia trước khi gradient kịp đảo chiều, tạo ra chuỗi dao động rung lắc (ringing) lãng phí nhiều bước tính toán.',
+          formula: 'L(w_1, w_2) = \\frac{1}{2}(w_1^2 + 10 w_2^2), \\quad v_t^{\\text{Polyak}} = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_t), \\quad \\theta_{t+1} = \\theta_t - v_t',
+          keyTakeaway: 'Momentum mù tính lực quá trễ: quán tính đẩy tham số bay qua điểm cực tiểu, buộc thuật toán phải tốn nhiều vòng lặp để kéo lùi lại.',
+        },
+        {
+          title: '2. Công thức "Nhìn Trước" & Cơ chế Phanh Chủ động của Nesterov',
+          content: 'Yurii Nesterov (1983) khắc phục triệt để nhược điểm này bằng cách đảo ngược thứ tự thực hiện: trước tiên thực hiện một bước nhảy quán tính thăm dò tới vị trí dự đoán θ_ahead = θ_t - β*v_{t-1}. Sau đó, tính gradient tại chính vị trí tương lai này. Nếu quán tính sắp làm hòn bi lao lên sườn dốc bên kia, gradient nhìn trước ∇L(θ_ahead) sẽ chỉ ngược lại sườn dốc, hoạt động như một hệ thống phanh chủ động ghìm vận tốc trước khi vọt lố!',
+          formula: '\\theta_{\\text{ahead}} = \\theta_t - \\beta v_{t-1}, \\quad v_t = \\beta v_{t-1} + \\alpha \\nabla L(\\theta_{\\text{ahead}}), \\quad \\theta_{t+1} = \\theta_t - v_t',
+          keyTakeaway: 'Gradient nhìn trước đóng vai trò như phanh điện tử ABS: phát hiện dốc ngược phía trước và chủ động giảm tốc để cua ngọt vào cực tiểu.',
+        },
+        {
+          title: '3. Tốc độ Hội tụ Tối ưu Lý thuyết: O(1/k²) so với O(1/k)',
+          content: 'Đối với các hàm lồi khả vi cấp 1 với đạo hàm Lipschitz L, Gradient Descent chuẩn và Momentum cổ điển chỉ đạt tốc độ hội tụ O(1/k). Năm 1983, Nesterov chứng minh rằng chặn dưới lý thuyết cho mọi phương pháp bậc nhất hộp đen là Ω(1/k²), và NAG chính là thuật toán đạt đến giới hạn hoàn hảo này! Để đạt độ chính xác ε, NAG chỉ cần O(1/√ε) bước lặp so với O(1/ε) của SGD—gia tốc bậc hai phi thường.',
+          formula: 'f(\\theta_k) - f^* \\le \\frac{2 L \\|\\theta_0 - \\theta^*\\|^2}{(k + 1)^2} = \\mathcal{O}\\left(\\frac{1}{k^2}\\right) \\quad \\longleftrightarrow \\quad \\text{SGD chuẩn: } \\mathcal{O}\\left(\\frac{1}{k}\\right)',
+          keyTakeaway: 'NAG là thuật toán tối ưu toán học hoàn hảo: không có phương pháp gradient bậc nhất nào có thể hội tụ nhanh hơn trên các hàm lồi trơn.',
+        },
+        {
+          title: '4. Ứng dụng trong Deep Learning & Trình Tối ưu Hiện đại (Nadam)',
+          content: 'Năm 2013, Sutskever et al. chứng minh Nesterov Momentum là chìa khóa mở đường huấn luyện thành công các mạng nơ-ron sâu và mạng hồi quy RNN, vượt qua các hẻm dốc phi lồi hiểm trở nơi SGD thường bị phân kỳ. Kết hợp NAG với tốc độ học thích ứng từng chiều (Adam) đã tạo ra Nadam (Dozat, 2016), hiện được sử dụng rộng rãi trong huấn luyện Transformer và mô hình ngôn ngữ lớn (LLM).',
+          formula: 'm_t = \\beta_1 m_{t-1} + (1 - \\beta_1) g_t, \\quad \\bar{m}_t = \\beta_1 m_t + (1 - \\beta_1) g_t, \\quad \\theta_{t+1} = \\theta_t - \\frac{\\alpha}{\\sqrt{\\hat{v}_t} + \\epsilon} \\frac{\\bar{m}_t}{1 - \\beta_1^t}',
+          keyTakeaway: 'Cơ chế nhìn trước Nesterov mang lại độ ổn định tối cao, cho phép thiết lập tốc độ học lớn mà không sợ sụp đổ gradient trong mạng sâu.',
+        },
+      ],
+    },
+    pythonCode: `import numpy as np
+
+def nesterov_accelerated_gradient(w_init, lr=0.1, beta=0.9, max_iters=14):
+    # Loss: L(w1, w2) = 0.5 * (w1^2 + 10 * w2^2)
+    # Gradient: [w1, 10 * w2]
+    w = np.array(w_init, dtype=float)
+    v = np.zeros_like(w)
+    path = []
+
+    for step in range(max_iters):
+        # 1. Take exploratory momentum step first (Look-ahead)
+        w_ahead = w - beta * v
+        
+        # 2. Evaluate gradient at the anticipated look-ahead position
+        grad_ahead = np.array([w_ahead[0], 10 * w_ahead[1]])
+        
+        # 3. Update velocity using look-ahead gradient (Braking action)
+        v = beta * v + lr * grad_ahead
+        
+        # 4. Final parameter update
+        w = w - v
+        loss = 0.5 * (w[0]**2 + 10 * w[1]**2)
+        path.append((w.copy(), w_ahead.copy(), loss, v.copy(), grad_ahead.copy()))
+        
+        if np.linalg.norm(grad_ahead) < 1e-3:
+            break
+
+    return w, path`,
+    code: `import numpy as np
+
+def nesterov_accelerated_gradient(w_init, lr=0.1, beta=0.9, max_iters=14):
+    w = np.array(w_init, dtype=float)
+    v = np.zeros_like(w)
+    for step in range(max_iters):
+        w_ahead = w - beta * v                  # 1. Momentum look-ahead
+        grad_ahead = np.array([w_ahead[0], 10 * w_ahead[1]])  # 2. Look-ahead gradient
+        v = beta * v + lr * grad_ahead          # 3. Update velocity
+        w = w - v                               # 4. Parameter update
+        loss = 0.5 * (w[0]**2 + 10 * w[1]**2)
+        if np.linalg.norm(grad_ahead) < 1e-3:
+            break
+    return w, loss`,
+    generateTraces: (inputStr?: string, lang: Language = 'en'): TraceStep[] => {
+      const isVi = lang === 'vi';
+
+      let startW: [number, number] = [4.5, 1.8];
+      let beta = 0.9;
+      let lr = 0.1;
+
+      if (inputStr) {
+        const startMatch = inputStr.match(/start\s*=\s*\(?\s*([-0-9.]+)\s*[,:]\s*([-0-9.]+)\s*\)?/);
+        if (startMatch) {
+          startW = [Number(startMatch[1]), Number(startMatch[2])];
+        }
+        const betaMatch = inputStr.match(/beta\s*=\s*([0-9.]+)/);
+        if (betaMatch) {
+          beta = Number(betaMatch[1]);
+        }
+        const lrMatch = inputStr.match(/lr\s*=\s*([0-9.]+)/);
+        if (lrMatch) {
+          lr = Number(lrMatch[1]);
+        }
+      }
+
+      const maxSteps = 12;
+
+      // 1. Precompute Vanilla SGD trajectory for comparison
+      const fullVanillaPath: MomentumTrajectoryPoint[] = [];
+      let vanW1 = startW[0];
+      let vanW2 = startW[1];
+      const vanLr = 0.16;
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (vanW1 * vanW1 + 10 * vanW2 * vanW2);
+        const g1 = vanW1;
+        const g2 = 10 * vanW2;
+        fullVanillaPath.push({
+          step: s,
+          w1: Number(vanW1.toFixed(3)),
+          w2: Number(vanW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          grad1: Number(g1.toFixed(3)),
+          grad2: Number(g2.toFixed(3)),
+        });
+        vanW1 -= vanLr * g1;
+        vanW2 -= vanLr * g2;
+      }
+
+      // 2. Precompute Classical Polyak Momentum trajectory for comparison (shows overshoot)
+      const fullPolyakPath: MomentumTrajectoryPoint[] = [];
+      let polyW1 = startW[0];
+      let polyW2 = startW[1];
+      let polyV1 = 0;
+      let polyV2 = 0;
+      for (let s = 0; s <= maxSteps; s++) {
+        const l = 0.5 * (polyW1 * polyW1 + 10 * polyW2 * polyW2);
+        const g1 = polyW1;
+        const g2 = 10 * polyW2;
+        fullPolyakPath.push({
+          step: s,
+          w1: Number(polyW1.toFixed(3)),
+          w2: Number(polyW2.toFixed(3)),
+          loss: Number(l.toFixed(4)),
+          v1: Number(polyV1.toFixed(4)),
+          v2: Number(polyV2.toFixed(4)),
+          grad1: Number(g1.toFixed(3)),
+          grad2: Number(g2.toFixed(3)),
+        });
+        polyV1 = beta * polyV1 + lr * g1;
+        polyV2 = beta * polyV2 + lr * g2;
+        polyW1 -= polyV1;
+        polyW2 -= polyV2;
+      }
+
+      // 3. Precompute Nesterov Accelerated Gradient trajectory
+      const fullNesterovPath: NesterovTrajectoryPoint[] = [];
+      let nagW1 = startW[0];
+      let nagW2 = startW[1];
+      let nagV1 = 0;
+      let nagV2 = 0;
+      for (let s = 0; s <= maxSteps; s++) {
+        const curLoss = 0.5 * (nagW1 * nagW1 + 10 * nagW2 * nagW2);
+
+        // Look-ahead position
+        const aheadW1 = nagW1 - beta * nagV1;
+        const aheadW2 = nagW2 - beta * nagV2;
+        const aheadLoss = 0.5 * (aheadW1 * aheadW1 + 10 * aheadW2 * aheadW2);
+
+        // Gradient evaluated AT the look-ahead position
+        const aheadG1 = aheadW1;
+        const aheadG2 = 10 * aheadW2;
+
+        fullNesterovPath.push({
+          step: s,
+          w1: Number(nagW1.toFixed(3)),
+          w2: Number(nagW2.toFixed(3)),
+          loss: Number(curLoss.toFixed(4)),
+          v1: Number(nagV1.toFixed(4)),
+          v2: Number(nagV2.toFixed(4)),
+          lookaheadW1: Number(aheadW1.toFixed(3)),
+          lookaheadW2: Number(aheadW2.toFixed(3)),
+          lookaheadLoss: Number(aheadLoss.toFixed(4)),
+          grad1: Number(aheadG1.toFixed(3)),
+          grad2: Number(aheadG2.toFixed(3)),
+        });
+
+        // Velocity and parameter update
+        nagV1 = beta * nagV1 + lr * aheadG1;
+        nagV2 = beta * nagV2 + lr * aheadG2;
+        nagW1 -= nagV1;
+        nagW2 -= nagV2;
+      }
+
+      const steps: TraceStep[] = [];
+
+      // Step 0: Initialization
+      const initPoint = fullNesterovPath[0];
+      steps.push({
+        step: 0,
+        totalSteps: 0,
+        line: 5,
+        action: 'init',
+        targets: [],
+        state: {
+          loss: initPoint.loss,
+          nesterovState: {
+            beta,
+            learningRate: lr,
+            currentW: [initPoint.w1, initPoint.w2],
+            loss: initPoint.loss,
+            lookaheadW: [initPoint.lookaheadW1 || initPoint.w1, initPoint.lookaheadW2 || initPoint.w2],
+            lookaheadLoss: initPoint.lookaheadLoss || initPoint.loss,
+            velocity: [0, 0],
+            lookaheadGradient: [initPoint.grad1 || 0, initPoint.grad2 || 0],
+            nesterovPath: [initPoint],
+            polyakPath: [fullPolyakPath[0]],
+            vanillaPath: [fullVanillaPath[0]],
+            surfaceType: 'ravine',
+            iteration: 0,
+            maxIterations: maxSteps,
+            converged: false,
+          },
+        },
+        explanation: isVi
+          ? `[Khởi tạo Nesterov]: Điểm xuất phát θ_0 = (${initPoint.w1}, ${initPoint.w2}) trên sườn hẻm dốc. Vận tốc ban đầu v_0 = (0, 0). Hệ số quán tính β = ${beta}, tốc độ học α = ${lr}.`
+          : `[Nesterov Init]: Initial position θ_0 = (${initPoint.w1}, ${initPoint.w2}) on steep ravine slope. Initial velocity v_0 = (0, 0). Momentum factor β = ${beta}, learning rate α = ${lr}.`,
+        invariant: `v_0 = (0, 0), \\quad \\theta_0 = (${initPoint.w1}, ${initPoint.w2})`,
+      });
+
+      for (let s = 1; s <= maxSteps; s++) {
+        const curPt = fullNesterovPath[s];
+        const vMag = Math.hypot(curPt.v1 || 0, curPt.v2 || 0);
+        const isLast = s === maxSteps || curPt.loss < 0.02;
+
+        steps.push({
+          step: 0,
+          totalSteps: 0,
+          line: isLast ? 14 : 10,
+          action: isLast ? 'done' : 'update',
+          targets: [],
+          state: {
+            loss: curPt.loss,
+            nesterovState: {
+              beta,
+              learningRate: lr,
+              currentW: [curPt.w1, curPt.w2],
+              loss: curPt.loss,
+              lookaheadW: [curPt.lookaheadW1 || curPt.w1, curPt.lookaheadW2 || curPt.w2],
+              lookaheadLoss: curPt.lookaheadLoss || curPt.loss,
+              velocity: [curPt.v1 || 0, curPt.v2 || 0],
+              lookaheadGradient: [curPt.grad1 || 0, curPt.grad2 || 0],
+              nesterovPath: fullNesterovPath.slice(0, s + 1),
+              polyakPath: fullPolyakPath.slice(0, s + 1),
+              vanillaPath: fullVanillaPath.slice(0, s + 1),
+              surfaceType: 'ravine',
+              iteration: s,
+              maxIterations: maxSteps,
+              converged: isLast,
+            },
+          },
+          explanation: isLast
+            ? isVi
+              ? `[Hội tụ Hoàn tất]: Sau ${s} bước, NAG dẫn dắt tham số tiệm cận đáy hẻm θ* = (0, 0) với Loss = ${curPt.loss.toFixed(4)}. So sánh với Polyak (vọt lố qua sườn đối diện) và SGD thuần (dao động nghẽn), NAG đạt tốc độ O(1/k²) hoàn hảo!`
+              : `[Convergence Complete]: After ${s} steps, NAG smoothly guided parameters into global minimum θ* = (0, 0) with Loss = ${curPt.loss.toFixed(4)}. Compared to Polyak (overshooting the opposite slope) and Vanilla SGD (trapped in oscillations), NAG achieves optimal O(1/k²) convergence!`
+            : isVi
+            ? `[Bước ${s} - Phanh Nhìn Trước]: Nhảy trước theo quán tính θ_ahead = (${curPt.lookaheadW1}, ${curPt.lookaheadW2}). Gradient đo tại điểm nhìn trước áp dụng lực phanh, cập nhật vận tốc ‖v‖ = ${vMag.toFixed(3)}. Tham số cập nhật về (${curPt.w1}, ${curPt.w2}) với Loss = ${curPt.loss.toFixed(4)}.`
+            : `[Step ${s} - Look-Ahead Braking]: Leaping ahead via momentum to θ_ahead = (${curPt.lookaheadW1}, ${curPt.lookaheadW2}). Gradient evaluated at look-ahead point applies counter-braking, net velocity ‖v‖ = ${vMag.toFixed(3)}. Position updated to (${curPt.w1}, ${curPt.w2}) with Loss = ${curPt.loss.toFixed(4)}.`,
+          invariant: `\\theta_{\\text{ahead}} = (${curPt.lookaheadW1}, ${curPt.lookaheadW2}), \\quad v_{${s}} = ${beta} v_{${s - 1}} + ${lr} \\nabla L(\\theta_{\\text{ahead}}), \\quad L = ${curPt.loss.toFixed(4)}`,
         });
 
         if (curPt.loss < 0.02) break;
