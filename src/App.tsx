@@ -9,11 +9,23 @@ import { RightPanels } from './components/RightPanels';
 import { DockPlayer } from './components/DockPlayer';
 import { LessonGuide } from './components/LessonGuide';
 import { MobileStoryMode } from './components/MobileStoryMode';
+import { AndroidLayout } from './components/AndroidLayout';
 import { CatalogView } from './components/CatalogView';
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>('sketch');
-  const [viewMode, setViewMode] = useState<ViewMode>('desktop-3pane');
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'android-ui';
+    }
+    return 'desktop-3pane';
+  });
   const [studioTab, setStudioTab] = useState<StudioTab>('trace');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [sidebarWidth, setSidebarWidth] = useState<number>(290);
@@ -66,6 +78,18 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isStageMaximized]);
+  // Auto-detect mobile screens and switch to Android UI
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileScreen(mobile);
+      if (mobile && viewMode === 'desktop-3pane') {
+        setViewMode('android-ui');
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewMode]);
   const [appRoute, setAppRoute] = useState<AppView>(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#visualizer')) {
       return 'visualizer';
@@ -285,6 +309,37 @@ export const App: React.FC = () => {
       </div>
     );
   }
+  // Android UI Mode (Full Mobile or Simulated Chassis Preview)
+  if (viewMode === 'android-ui') {
+    return (
+      <AndroidLayout
+        theme={theme}
+        onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
+        selectedPreset={selectedPreset}
+        onSelectPreset={handleSelectPreset}
+        step={currentStep}
+        currentStep={currentStepIndex + 1}
+        totalSteps={totalSteps}
+        isPlaying={isPlaying}
+        speed={speed}
+        onTogglePlay={handleTogglePlay}
+        onNextStep={handleNext}
+        onPrevStep={handlePrev}
+        onReset={handleReset}
+        onSeek={handleSeek}
+        onChangeSpeed={setSpeed}
+        inputStr={inputStr}
+        onChangeInput={(val) => {
+          setInputStr(val);
+          setCurrentStepIndex(0);
+        }}
+        language={language}
+        onSelectLanguage={setLanguage}
+        onSwitchToDesktop={() => setViewMode('desktop-3pane')}
+        isMobileScreen={isMobileScreen}
+      />
+    );
+  }
 
   // Unified VizLearn-aligned studio architecture
   return (
@@ -306,6 +361,7 @@ export const App: React.FC = () => {
           setAppRoute('catalog');
           window.location.hash = '#catalog';
         }}
+        onLaunchAndroidUI={() => setViewMode('android-ui')}
       />
 
       {/* 2. Docked Curriculum Lesson Sidebar with draggable width resize */}
@@ -342,7 +398,7 @@ export const App: React.FC = () => {
           viewMode={viewMode}
           onToggleViewMode={() =>
             setViewMode((prev) =>
-              prev === 'desktop-3pane' ? 'mobile-story' : 'desktop-3pane'
+              prev === 'desktop-3pane' ? 'android-ui' : 'desktop-3pane'
             )
           }
           selectedPreset={selectedPreset}

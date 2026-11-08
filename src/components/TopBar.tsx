@@ -112,16 +112,16 @@ export const TopBar: React.FC<TopBarProps> = ({
           theme={theme}
         />
 
-        {/* Mobile Story vs Desktop toggle */}
+        {/* Android UI vs Desktop Studio toggle */}
         <button
           onClick={onToggleViewMode}
-          title={viewMode === 'desktop-3pane' ? 'Mobile Story Mode' : 'Desktop 3-Pane'}
+          title={viewMode === 'desktop-3pane' ? t.androidUI : t.desktopStudio}
           className={`p-2 rounded-xl transition-colors ${
             isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
           }`}
         >
           {viewMode === 'desktop-3pane' ? (
-            <Smartphone className="w-4 h-4" />
+            <Smartphone className="w-4 h-4 text-emerald-400" />
           ) : (
             <Monitor className="w-4 h-4" />
           )}

@@ -8,7 +8,8 @@ import {
   Moon, 
   Code2,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Smartphone
 } from 'lucide-react';
 import type { ThemeMode, AICategory } from '../types';
 
@@ -19,6 +20,7 @@ interface NavRailProps {
   onToggleSidebar: () => void;
   onSelectCategory: (cat: AICategory | 'All') => void;
   onGoHome: () => void;
+  onLaunchAndroidUI?: () => void;
 }
 
 export const NavRail: React.FC<NavRailProps> = ({
@@ -28,9 +30,9 @@ export const NavRail: React.FC<NavRailProps> = ({
   onToggleSidebar,
   onSelectCategory,
   onGoHome,
+  onLaunchAndroidUI,
 }) => {
   const isDark = theme === 'studio';
-
   return (
     <aside
       className={`w-14 shrink-0 flex flex-col items-center justify-between py-4 border-r transition-colors select-none z-30 ${
@@ -97,6 +99,16 @@ export const NavRail: React.FC<NavRailProps> = ({
         >
           <BrainCircuit className="w-5 h-5" />
         </button>
+
+        {onLaunchAndroidUI && (
+          <button
+            onClick={onLaunchAndroidUI}
+            title="Launch Android UI Mode"
+            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-500 hover:text-emerald-400 transition-colors"
+          >
+            <Smartphone className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Bottom Actions: Theme & GitHub */}

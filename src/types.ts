@@ -1,7 +1,8 @@
 export type ThemeMode = 'sketch' | 'studio';
 
 export type Language = 'en' | 'vi';
-export type ViewMode = 'desktop-3pane' | 'mobile-story';
+export type ViewMode = 'desktop-3pane' | 'android-ui' | 'mobile-story';
+export type AndroidTab = 'stage' | 'code' | 'theory' | 'curriculum';
 
 export type AppView = 'catalog' | 'visualizer';
 
