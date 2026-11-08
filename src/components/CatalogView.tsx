@@ -8,7 +8,8 @@ import {
   Binary, 
   Layers, 
   BrainCircuit, 
-  ArrowRight
+  ArrowRight,
+  Smartphone
 } from 'lucide-react';
 import type { 
   ThemeMode, 
@@ -16,7 +17,8 @@ import type {
   AlgorithmCategory, 
   DifficultyLevel,
   Language,
-  AICategory
+  AICategory,
+  ViewMode
 } from '../types';
 import { 
   ALGORITHM_PRESETS,
@@ -34,6 +36,8 @@ interface CatalogViewProps {
   onToggleTheme: () => void;
   language: Language;
   onSelectLanguage: (lang: Language) => void;
+  viewMode?: ViewMode;
+  onToggleViewMode?: () => void;
 }
 
 export const CatalogView: React.FC<CatalogViewProps> = ({
@@ -42,6 +46,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   onToggleTheme,
   language,
   onSelectLanguage,
+  onToggleViewMode,
 }) => {
   const isSketch = theme === 'sketch';
   const t = getLocalizedText(language);
@@ -179,6 +184,17 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             >
               {isSketch ? '✍ Sketch Mode' : '💎 Clean Studio'}
             </button>
+
+            {onToggleViewMode && (
+              <button
+                onClick={onToggleViewMode}
+                title={t.androidUI}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Android UI</span>
+              </button>
+            )}
           </div>
         </div>
       </header>

@@ -10,8 +10,8 @@ import { DockPlayer } from './components/DockPlayer';
 import { LessonGuide } from './components/LessonGuide';
 import { MobileStoryMode } from './components/MobileStoryMode';
 import { AndroidLayout } from './components/AndroidLayout';
+import { AndroidCatalogLayout } from './components/AndroidCatalogLayout';
 import { CatalogView } from './components/CatalogView';
-
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<ThemeMode>('sketch');
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
@@ -297,6 +297,25 @@ export const App: React.FC = () => {
 
   // If on Catalog Route
   if (appRoute === 'catalog') {
+    // Android UI Mode for Main Page
+    if (viewMode === 'android-ui') {
+      return (
+        <AndroidCatalogLayout
+          theme={theme}
+          onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
+          onSelectAlgorithm={handleSelectPreset}
+          language={language}
+          onSelectLanguage={setLanguage}
+          onSwitchToDesktop={() => setViewMode('desktop-3pane')}
+          onLaunchVisualizer={() => {
+            setAppRoute('visualizer');
+            window.location.hash = `#visualizer?id=${selectedPreset.id}`;
+          }}
+          isMobileScreen={isMobileScreen}
+        />
+      );
+    }
+
     return (
       <div className="animate-page-enter">
         <CatalogView
@@ -305,6 +324,8 @@ export const App: React.FC = () => {
           onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
           language={language}
           onSelectLanguage={setLanguage}
+          viewMode={viewMode}
+          onToggleViewMode={() => setViewMode('android-ui')}
         />
       </div>
     );
