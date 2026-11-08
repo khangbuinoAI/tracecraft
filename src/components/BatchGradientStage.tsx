@@ -284,6 +284,38 @@ export const BatchGradientStage: React.FC<BatchGradientStageProps> = ({
           </button>
         </div>
       </div>
+      {/* Vector Decomposition Legend Strip (Positioned outside canvas to prevent covering visualization) */}
+      {showVectors && (
+        <div
+          className={`w-full max-w-4xl mb-2 px-3 py-2 rounded-xl border text-xs font-mono shadow-xs flex flex-wrap items-center justify-between gap-2 transition-all animate-fade-in ${
+            isDark
+              ? 'bg-[#0f172a] border-blue-900/60 text-slate-200'
+              : 'bg-blue-50/90 border-blue-200 text-blue-950'
+          }`}
+        >
+          <div className="text-[10px] font-bold uppercase tracking-wider text-blue-500 dark:text-blue-400 flex items-center gap-1.5 shrink-0">
+            <Layers className="w-3.5 h-3.5" />
+            <span>{isVi ? 'Phân tích Gradient Toàn Tập:' : 'Full-Batch Averaging:'}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 bg-slate-400 rounded-full border-t border-dashed opacity-60" />
+              <span className="text-slate-400 font-semibold">{isVi ? 'Từng mẫu:' : 'Sample Grads:'}</span>
+              <span>∇ℓ_i (i=1..N)</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-1 bg-blue-500 rounded-full" />
+              <span className="text-blue-400 font-bold">{isVi ? 'Toàn Tập:' : 'Batch Gradient:'}</span>
+              <span>(1/N)∑∇ℓ_i</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500/20 border border-blue-400" />
+              <span className="text-blue-400">{isVi ? 'Phương sai:' : 'Variance:'}</span>
+              <span className="text-emerald-400 font-bold">σ² = 0 (Exact)</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* 2. MAIN 2D CONTOUR LOSS SURFACE CANVAS                    */}
@@ -299,36 +331,6 @@ export const BatchGradientStage: React.FC<BatchGradientStageProps> = ({
           <span>{isVi ? 'Nhấn lên bề mặt hàm mất mát để chọn điểm khởi đầu w₀' : 'Click contour to set new start parameters'}</span>
         </div>
 
-        {/* Vector Decomposition Legend HUD */}
-        {showVectors && (
-          <div
-            className={`absolute top-2.5 right-3 z-10 px-3 py-2 rounded-xl border text-xs font-mono shadow-md backdrop-blur-md transition-all ${
-              isDark ? 'bg-slate-900/90 border-slate-700 text-slate-200' : 'bg-white/90 border-slate-200 text-slate-800'
-            }`}
-          >
-            <div className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mb-1 flex items-center gap-1">
-              <Layers className="w-3 h-3" />
-              <span>{isVi ? 'Phân tích Gradient Toàn Tập' : 'Full-Batch Averaging'}</span>
-            </div>
-            <div className="flex flex-col gap-1 text-[11px]">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-0.5 bg-slate-400 rounded-full border-t border-dashed opacity-60" />
-                <span className="text-slate-400 font-semibold">{isVi ? 'Gradient từng mẫu:' : 'Sample Grads:'}</span>
-                <span>∇ℓ_i (i=1..N)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-1 bg-blue-500 rounded-full" />
-                <span className="text-blue-400 font-bold">{isVi ? 'Gradient Toàn Tập:' : 'Batch Gradient:'}</span>
-                <span>(1/N)∑∇ℓ_i</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500/20 border border-blue-400" />
-                <span className="text-blue-400">{isVi ? 'Độ lệch phương sai:' : 'Variance:'}</span>
-                <span className="text-emerald-400 font-bold">σ² = 0 (Exact)</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Hover Tooltip */}
         {hoveredNode && (

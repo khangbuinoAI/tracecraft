@@ -379,8 +379,7 @@ export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
         <main className="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col">
           {/* TAB 1: VISUAL STAGE & EXECUTION TRACKER */}
           {activeTab === 'stage' && (
-            <div className="flex-1 flex flex-col p-3 space-y-3 pb-24 animate-tab-enter">
-              {/* Data Presets Horizontal Scroll Bar */}
+            <div className="flex-1 flex flex-col p-3 space-y-3 pb-4 animate-tab-enter">
               {variants.length > 0 && (
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 shrink-0 no-scrollbar">
                   <div className="flex items-center gap-1 text-[11px] font-mono opacity-60 mr-1 shrink-0">
@@ -716,88 +715,89 @@ export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
           {/* ========================================================= */}
           {/* ANDROID FLOATING PLAYER DOCK (Visible on 'stage' tab)     */}
           {/* ========================================================= */}
-          {activeTab === 'stage' && (
-            <div className="absolute bottom-2 left-2 right-2 z-20 pointer-events-none">
-              <div
-                className={`pointer-events-auto p-2.5 rounded-2xl border shadow-xl flex flex-col gap-1.5 backdrop-blur-md transition-all ${
-                  isDark
-                    ? 'bg-[#0e1628]/95 border-[#1e2b45] text-slate-100'
-                    : 'bg-white/95 border-slate-300 text-slate-900'
-                }`}
-              >
-                {/* Touch Scrubber */}
-                <div className="w-full relative flex items-center h-3">
-                  <div className="absolute inset-x-0 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden pointer-events-none">
-                    <div
-                      style={{ width: `${progressPct}%` }}
-                      className="h-full bg-cyan-500 rounded-full transition-all duration-100 ease-out"
-                    />
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={Math.max(1, totalSteps)}
-                    value={currentStep}
-                    onChange={(e) => onSeek(Number(e.target.value))}
-                    className="w-full h-3 opacity-0 cursor-pointer absolute inset-0 z-10"
-                  />
-                  <div
-                    style={{ left: `calc(${progressPct}% - 6px)` }}
-                    className="w-3 h-3 rounded-full bg-cyan-400 shadow pointer-events-none absolute transition-all duration-100 ease-out border-2 border-white dark:border-slate-950"
-                  />
-                </div>
-
-                {/* Player Controls */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono opacity-70">
-                    {currentStep} / {totalSteps}
-                  </span>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={onPrevStep}
-                      disabled={currentStep <= 1}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 bg-slate-200/60 dark:bg-slate-800/80"
-                      title={t.previous}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    {/* Circular FAB Play/Pause */}
-                    <button
-                      onClick={onTogglePlay}
-                      className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold shadow-md shadow-cyan-500/25 active:scale-90 transition-transform"
-                      title={isPlaying ? t.pause : t.play}
-                    >
-                      {isPlaying ? (
-                        <Pause className="w-4 h-4 fill-current" />
-                      ) : (
-                        <Play className="w-4 h-4 fill-current ml-0.5" />
-                      )}
-                    </button>
-
-                    <button
-                      onClick={onNextStep}
-                      disabled={currentStep >= totalSteps}
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 bg-slate-200/60 dark:bg-slate-800/80"
-                      title={t.next}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={cycleSpeed}
-                    className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-slate-200 dark:bg-slate-800 text-cyan-400"
-                    title={t.speed}
-                  >
-                    {speed}x
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </main>
+        {/* ========================================================= */}
+        {/* ANDROID BOTTOM PLAYER DOCK (Docked above Bottom Nav)      */}
+        {/* ========================================================= */}
+        {activeTab === 'stage' && (
+          <div
+            className={`shrink-0 px-3 py-2 border-t z-20 flex flex-col gap-1.5 transition-colors select-none ${
+              isDark
+                ? 'bg-[#0e1628] border-[#1e2b45] text-slate-100'
+                : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+            }`}
+          >
+            {/* Touch Scrubber */}
+            <div className="w-full relative flex items-center h-3">
+              <div className="absolute inset-x-0 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden pointer-events-none">
+                <div
+                  style={{ width: `${progressPct}%` }}
+                  className="h-full bg-cyan-500 rounded-full transition-all duration-100 ease-out"
+                />
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={Math.max(1, totalSteps)}
+                value={currentStep}
+                onChange={(e) => onSeek(Number(e.target.value))}
+                className="w-full h-3 opacity-0 cursor-pointer absolute inset-0 z-10"
+              />
+              <div
+                style={{ left: `calc(${progressPct}% - 6px)` }}
+                className="w-3 h-3 rounded-full bg-cyan-400 shadow pointer-events-none absolute transition-all duration-100 ease-out border-2 border-white dark:border-slate-950"
+              />
+            </div>
+
+            {/* Player Controls */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono opacity-70">
+                {currentStep} / {totalSteps}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onPrevStep}
+                  disabled={currentStep <= 1}
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 bg-slate-200/60 dark:bg-slate-800/80"
+                  title={t.previous}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Circular FAB Play/Pause */}
+                <button
+                  onClick={onTogglePlay}
+                  className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold shadow-md shadow-cyan-500/25 active:scale-90 transition-transform"
+                  title={isPlaying ? t.pause : t.play}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4 fill-current" />
+                  ) : (
+                    <Play className="w-4 h-4 fill-current ml-0.5" />
+                  )}
+                </button>
+
+                <button
+                  onClick={onNextStep}
+                  disabled={currentStep >= totalSteps}
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 disabled:opacity-30 bg-slate-200/60 dark:bg-slate-800/80"
+                  title={t.next}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
+                onClick={cycleSpeed}
+                className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold bg-slate-200 dark:bg-slate-800 text-cyan-400"
+                title={t.speed}
+              >
+                {speed}x
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ========================================================= */}
         {/* ANDROID CURRICULUM DRAWER (Slide from Left)               */}
