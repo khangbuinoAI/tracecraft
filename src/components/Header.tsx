@@ -34,7 +34,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  theme,
+  theme: _theme,
   onToggleTheme,
   viewMode,
   onToggleViewMode,
@@ -51,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
   studioTab,
   onSelectStudioTab,
 }) => {
-  const isSketch = theme === 'sketch';
+  const isSketch = false;
 
   return (
     <header

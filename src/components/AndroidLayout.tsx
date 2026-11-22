@@ -16,10 +16,7 @@ import {
   Activity,
   Sparkles,
   Cpu,
-  Monitor,
   Smartphone,
-  Sun,
-  Moon,
   Binary,
   BrainCircuit,
   Info,
@@ -53,7 +50,6 @@ import cbtLogo from '../assets/cbt-logo.png';
 
 interface AndroidLayoutProps {
   theme: ThemeMode;
-  onToggleTheme: () => void;
   selectedPreset: AlgorithmPreset;
   onSelectPreset: (preset: AlgorithmPreset) => void;
   step: TraceStep;
@@ -71,7 +67,6 @@ interface AndroidLayoutProps {
   onChangeInput: (newInput: string) => void;
   language: Language;
   onSelectLanguage: (lang: Language) => void;
-  onSwitchToDesktop?: () => void;
   isMobileScreen: boolean;
 }
 
@@ -102,7 +97,6 @@ export const AndroidIcon: React.FC<{ className?: string }> = ({ className = 'w-4
 
 export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
   theme,
-  onToggleTheme,
   selectedPreset,
   onSelectPreset,
   step,
@@ -120,7 +114,6 @@ export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
   onChangeInput,
   language,
   onSelectLanguage,
-  onSwitchToDesktop,
   isMobileScreen,
 }) => {
   const isDark = theme === 'studio';
@@ -245,17 +238,6 @@ export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
                 </>
               )}
             </button>
-
-            {onSwitchToDesktop && (
-              <button
-                onClick={onSwitchToDesktop}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 py-1.5 rounded-full shadow-lg text-xs font-bold transition-all active:scale-95"
-                title={t.desktopStudio}
-              >
-                <Monitor className="w-3.5 h-3.5" />
-                <span>{t.desktopStudio}</span>
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -349,17 +331,6 @@ export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
           <div className="flex items-center gap-1">
             {/* Language Switch */}
             <LanguageSwitch language={language} onSelectLanguage={onSelectLanguage} theme={theme} />
-
-            {/* Theme Toggle */}
-            <button
-              onClick={onToggleTheme}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
-                isDark ? 'text-amber-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-              title="Toggle Theme"
-            >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
 
             {/* Step Reset */}
             <button

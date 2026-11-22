@@ -2,22 +2,15 @@ import React from 'react';
 import { 
   Play, 
   BookOpen, 
-  Sun, 
-  Moon, 
-  Smartphone, 
-  Monitor,
   RotateCcw,
   ChevronRight
 } from 'lucide-react';
-import type { ThemeMode, ViewMode, AlgorithmPreset, StudioTab, Language } from '../types';
+import type { ThemeMode, AlgorithmPreset, StudioTab, Language } from '../types';
 import { getPresetTitle, getPresetCategory, getPresetBadge } from '../algorithms/presets';
 import { getLocalizedText } from '../i18n/translations';
 import { LanguageSwitch } from './LanguageSwitch';
 interface TopBarProps {
   theme: ThemeMode;
-  onToggleTheme: () => void;
-  viewMode: ViewMode;
-  onToggleViewMode: () => void;
   selectedPreset: AlgorithmPreset;
   studioTab: StudioTab;
   onSelectStudioTab: (tab: StudioTab) => void;
@@ -28,9 +21,6 @@ interface TopBarProps {
 
 export const TopBar: React.FC<TopBarProps> = ({
   theme,
-  onToggleTheme,
-  viewMode,
-  onToggleViewMode,
   selectedPreset,
   studioTab,
   onSelectStudioTab,
@@ -111,32 +101,6 @@ export const TopBar: React.FC<TopBarProps> = ({
           onSelectLanguage={onSelectLanguage}
           theme={theme}
         />
-
-        {/* Android UI vs Desktop Studio toggle */}
-        <button
-          onClick={onToggleViewMode}
-          title={viewMode === 'desktop-3pane' ? t.androidUI : t.desktopStudio}
-          className={`p-2 rounded-xl transition-colors ${
-            isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'
-          }`}
-        >
-          {viewMode === 'desktop-3pane' ? (
-            <Smartphone className="w-4 h-4 text-emerald-400" />
-          ) : (
-            <Monitor className="w-4 h-4" />
-          )}
-        </button>
-
-        {/* Theme toggle */}
-        <button
-          onClick={onToggleTheme}
-          title="Toggle Light / Dark"
-          className={`p-2 rounded-xl transition-colors ${
-            isDark ? 'hover:bg-slate-800 text-amber-400' : 'hover:bg-slate-100 text-slate-600'
-          }`}
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
 
         {/* Reset */}
         <button

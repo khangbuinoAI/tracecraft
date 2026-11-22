@@ -26,7 +26,7 @@ interface PlayerControlsProps {
 }
 
 export const PlayerControls: React.FC<PlayerControlsProps> = ({
-  theme,
+  theme: _theme,
   currentStep,
   totalSteps,
   isPlaying,
@@ -39,7 +39,7 @@ export const PlayerControls: React.FC<PlayerControlsProps> = ({
   onSeek,
   onChangeSpeed,
 }) => {
-  const isSketch = theme === 'sketch';
+  const isSketch = false;
   const speeds = [0.5, 1, 2, 4];
 
   return (

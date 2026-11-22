@@ -1,4 +1,4 @@
-export type ThemeMode = 'sketch' | 'studio';
+export type ThemeMode = 'studio';
 
 export type Language = 'en' | 'vi';
 export type ViewMode = 'desktop-3pane' | 'android-ui' | 'mobile-story';

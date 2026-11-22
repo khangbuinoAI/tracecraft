@@ -4,34 +4,27 @@ import {
   Layers, 
   Binary, 
   BrainCircuit, 
-  Sun, 
-  Moon, 
   Code2,
   PanelLeftClose,
-  PanelLeftOpen,
-  Smartphone
+  PanelLeftOpen
 } from 'lucide-react';
 import type { ThemeMode, AICategory } from '../types';
 import cbtLogo from '../assets/cbt-logo.png';
 
 interface NavRailProps {
   theme: ThemeMode;
-  onToggleTheme: () => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   onSelectCategory: (cat: AICategory | 'All') => void;
   onGoHome: () => void;
-  onLaunchAndroidUI?: () => void;
 }
 
 export const NavRail: React.FC<NavRailProps> = ({
   theme,
-  onToggleTheme,
   sidebarOpen,
   onToggleSidebar,
   onSelectCategory,
   onGoHome,
-  onLaunchAndroidUI,
 }) => {
   const isDark = theme === 'studio';
   return (
@@ -104,29 +97,10 @@ export const NavRail: React.FC<NavRailProps> = ({
         >
           <BrainCircuit className="w-5 h-5" />
         </button>
-
-        {onLaunchAndroidUI && (
-          <button
-            onClick={onLaunchAndroidUI}
-            title="Launch Android UI Mode"
-            className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-emerald-500 hover:text-emerald-400 transition-colors"
-          >
-            <Smartphone className="w-5 h-5" />
-          </button>
-        )}
       </div>
 
-      {/* Bottom Actions: Theme & GitHub */}
+      {/* Bottom Actions: GitHub */}
       <div className="flex flex-col items-center gap-3">
-        {/* Theme Switcher */}
-        <button
-          onClick={onToggleTheme}
-          title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
-        >
-          {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
-        </button>
-
         {/* GitHub link */}
         <a
           href="https://github.com/khangbuinoAI/tracecraft"

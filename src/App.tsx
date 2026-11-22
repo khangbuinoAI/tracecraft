@@ -12,20 +12,11 @@ import { MobileStoryMode } from './components/MobileStoryMode';
 import { AndroidLayout } from './components/AndroidLayout';
 import { AndroidCatalogLayout } from './components/AndroidCatalogLayout';
 import { CatalogView } from './components/CatalogView';
+import { detectDeviceUI } from './utils/deviceDetection';
 export const App: React.FC = () => {
-  const [theme, setTheme] = useState<ThemeMode>('sketch');
-  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768;
-    }
-    return false;
-  });
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      return 'android-ui';
-    }
-    return 'desktop-3pane';
-  });
+  const theme: ThemeMode = 'studio';
+  const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => detectDeviceUI().isMobileOrTablet);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => detectDeviceUI().recommendedViewMode);
   const [studioTab, setStudioTab] = useState<StudioTab>('trace');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [sidebarWidth, setSidebarWidth] = useState<number>(290);
@@ -78,18 +69,30 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isStageMaximized]);
-  // Auto-detect mobile screens and switch to Android UI
+  // Auto-detect device and viewport size to switch seamlessly between Mobile/Tablet UI and Desktop Studio UI
   useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobileScreen(mobile);
-      if (mobile && viewMode === 'desktop-3pane') {
-        setViewMode('android-ui');
-      }
+    const syncDeviceLayout = () => {
+      const { isMobileOrTablet, recommendedViewMode } = detectDeviceUI();
+      setIsMobileScreen(isMobileOrTablet);
+      setViewMode(recommendedViewMode);
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [viewMode]);
+
+    syncDeviceLayout();
+    window.addEventListener('resize', syncDeviceLayout);
+    window.addEventListener('orientationchange', syncDeviceLayout);
+
+    const pointerMedia =
+      typeof window.matchMedia === 'function'
+        ? window.matchMedia('(pointer: coarse) and (hover: none)')
+        : null;
+    pointerMedia?.addEventListener?.('change', syncDeviceLayout);
+
+    return () => {
+      window.removeEventListener('resize', syncDeviceLayout);
+      window.removeEventListener('orientationchange', syncDeviceLayout);
+      pointerMedia?.removeEventListener?.('change', syncDeviceLayout);
+    };
+  }, []);
   const [appRoute, setAppRoute] = useState<AppView>(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#visualizer')) {
       return 'visualizer';
@@ -293,8 +296,6 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [appRoute, handleTogglePlay, handleNext, handlePrev, handleFirst, handleLast, handleReset]);
 
-  const isDark = theme === 'studio';
-
   // If on Catalog Route
   if (appRoute === 'catalog') {
     // Android UI Mode for Main Page
@@ -302,11 +303,9 @@ export const App: React.FC = () => {
       return (
         <AndroidCatalogLayout
           theme={theme}
-          onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
           onSelectAlgorithm={handleSelectPreset}
           language={language}
           onSelectLanguage={setLanguage}
-          onSwitchToDesktop={() => setViewMode('desktop-3pane')}
           onLaunchVisualizer={() => {
             setAppRoute('visualizer');
             window.location.hash = `#visualizer?id=${selectedPreset.id}`;
@@ -321,21 +320,17 @@ export const App: React.FC = () => {
         <CatalogView
           theme={theme}
           onSelectAlgorithm={handleSelectPreset}
-          onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
           language={language}
           onSelectLanguage={setLanguage}
-          viewMode={viewMode}
-          onToggleViewMode={() => setViewMode('android-ui')}
         />
       </div>
     );
   }
-  // Android UI Mode (Full Mobile or Simulated Chassis Preview)
+  // Android UI Mode (Full Mobile or Tablet UI)
   if (viewMode === 'android-ui') {
     return (
       <AndroidLayout
         theme={theme}
-        onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
         selectedPreset={selectedPreset}
         onSelectPreset={handleSelectPreset}
         step={currentStep}
@@ -356,7 +351,6 @@ export const App: React.FC = () => {
         }}
         language={language}
         onSelectLanguage={setLanguage}
-        onSwitchToDesktop={() => setViewMode('desktop-3pane')}
         isMobileScreen={isMobileScreen}
       />
     );
@@ -364,17 +358,10 @@ export const App: React.FC = () => {
 
   // Unified VizLearn-aligned studio architecture
   return (
-    <div
-      className={`h-screen w-screen flex overflow-hidden font-sans select-none transition-colors duration-300 animate-page-enter ${
-        isDark
-          ? 'bg-[#090d16] text-slate-100 dark bg-viz-dots-dark'
-          : 'bg-[#fbfbfb] text-slate-800 bg-viz-dots'
-      }`}
-    >
+    <div className="h-screen w-screen flex overflow-hidden font-sans select-none transition-colors duration-300 animate-page-enter bg-[#090d16] text-slate-100 dark bg-viz-dots-dark">
       {/* 1. Leftmost Slim Navigation Rail */}
       <NavRail
         theme={theme}
-        onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
         onSelectCategory={handleSelectCategoryFromRail}
@@ -382,7 +369,6 @@ export const App: React.FC = () => {
           setAppRoute('catalog');
           window.location.hash = '#catalog';
         }}
-        onLaunchAndroidUI={() => setViewMode('android-ui')}
       />
 
       {/* 2. Docked Curriculum Lesson Sidebar with draggable width resize */}
@@ -415,13 +401,6 @@ export const App: React.FC = () => {
         {/* Top Breadcrumb & Segmented Pill Switcher */}
         <TopBar
           theme={theme}
-          onToggleTheme={() => setTheme(isDark ? 'sketch' : 'studio')}
-          viewMode={viewMode}
-          onToggleViewMode={() =>
-            setViewMode((prev) =>
-              prev === 'desktop-3pane' ? 'android-ui' : 'desktop-3pane'
-            )
-          }
           selectedPreset={selectedPreset}
           studioTab={studioTab}
           onSelectStudioTab={setStudioTab}

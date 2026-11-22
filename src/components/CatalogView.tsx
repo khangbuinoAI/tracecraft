@@ -7,8 +7,7 @@ import {
   Binary, 
   Layers, 
   BrainCircuit, 
-  ArrowRight,
-  Smartphone
+  ArrowRight
 } from 'lucide-react';
 import type { 
   ThemeMode, 
@@ -16,8 +15,7 @@ import type {
   AlgorithmCategory, 
   DifficultyLevel,
   Language,
-  AICategory,
-  ViewMode
+  AICategory
 } from '../types';
 import { 
   ALGORITHM_PRESETS,
@@ -33,22 +31,16 @@ import cbtLogo from '../assets/cbt-logo.png';
 interface CatalogViewProps {
   theme: ThemeMode;
   onSelectAlgorithm: (preset: AlgorithmPreset) => void;
-  onToggleTheme: () => void;
   language: Language;
   onSelectLanguage: (lang: Language) => void;
-  viewMode?: ViewMode;
-  onToggleViewMode?: () => void;
 }
 
 export const CatalogView: React.FC<CatalogViewProps> = ({
   theme,
   onSelectAlgorithm,
-  onToggleTheme,
   language,
   onSelectLanguage,
-  onToggleViewMode,
 }) => {
-  const isSketch = theme === 'sketch';
   const t = getLocalizedText(language);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<AlgorithmCategory | 'All'>('All');
@@ -103,36 +95,18 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   const getDifficultyBadge = (difficulty: DifficultyLevel) => {
     switch (difficulty) {
       case 'Beginner':
-        return isSketch
-          ? 'bg-[#98971a]/20 text-[#79740e] border border-[#79740e]/40'
-          : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+        return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
       case 'Intermediate':
-        return isSketch
-          ? 'bg-[#fabd2f]/30 text-[#b57614] border border-[#b57614]/40'
-          : 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+        return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
       case 'Advanced':
-        return isSketch
-          ? 'bg-[#cc241d]/20 text-[#9d0006] border border-[#9d0006]/40'
-          : 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+        return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
     }
   };
 
   return (
-    <div
-      className={`min-h-screen flex flex-col select-none transition-colors duration-200 ${
-        isSketch
-          ? 'bg-sketch-grid text-[#282828] font-sans'
-          : 'bg-studio-grid text-slate-100 font-sans'
-      }`}
-    >
+    <div className="min-h-screen flex flex-col select-none transition-colors duration-200 bg-viz-dots-dark text-slate-100 font-sans">
       {/* Top Navbar */}
-      <header
-        className={`w-full border-b transition-colors ${
-          isSketch
-            ? 'bg-[#fcfaf5] border-[#3c3836]/30 text-[#282828]'
-            : 'bg-[#0b0f19] border-[#222f46] text-white'
-        }`}
-      >
+      <header className="w-full border-b transition-colors bg-[#0b0f19] border-[#222f46] text-white">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
@@ -141,18 +115,10 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
               className="w-10 h-10 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(15,3,69,0.18)]"
             />
             <div className="flex flex-col">
-              <span
-                className={`font-extrabold tracking-tight leading-none text-lg sm:text-xl ${
-                  isSketch ? 'text-[#282828]' : 'text-white'
-                }`}
-              >
+              <span className="font-extrabold tracking-tight leading-none text-lg sm:text-xl text-white">
                 Chuyen Ben Tre
               </span>
-              <div
-                className={`flex items-center gap-2 text-[11px] font-mono tracking-[0.24em] uppercase leading-tight mt-1 ${
-                  isSketch ? 'text-[#504945]' : 'text-slate-300/85'
-                }`}
-              >
+              <div className="flex items-center gap-2 text-[11px] font-mono tracking-[0.24em] uppercase leading-tight mt-1 text-slate-300/85">
                 <span className="font-bold">AIO</span>
                 <span>Curriculum</span>
               </div>
@@ -166,64 +132,24 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
               onSelectLanguage={onSelectLanguage}
               theme={theme}
             />
-
-            <button
-              onClick={onToggleTheme}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                isSketch
-                  ? 'bg-[#ebdbb2] border-2 border-[#3c3836] text-[#282828] font-sketch text-sm'
-                  : 'bg-[#151c2d] border border-[#2a3752] text-slate-200 hover:border-cyan-500/50 hover:bg-[#1a233a]'
-              }`}
-            >
-              {isSketch ? '✍ Sketch Mode' : '💎 Clean Studio'}
-            </button>
-
-            {onToggleViewMode && (
-              <button
-                onClick={onToggleViewMode}
-                title={t.androidUI}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Android UI</span>
-              </button>
-            )}
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 pt-10 pb-6 w-full text-center">
-        <div
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono mb-4 ${
-            isSketch
-              ? 'bg-[#ebdbb2] text-[#3c3836] border border-[#3c3836]/30'
-              : 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/50'
-          }`}
-        >
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono mb-4 bg-cyan-950/60 text-cyan-300 border border-cyan-800/50">
           <Sparkles className="w-3.5 h-3.5" />
           <span>{t.tagline}</span>
         </div>
 
-        <h1
-          className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-6 ${
-            isSketch
-              ? 'font-sketch text-4xl sm:text-6xl text-[#282828]'
-              : 'text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-300'
-          }`}
-        >
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-6 text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-300">
           {t.heroTitle}
         </h1>
 
         {/* Search & Filter Bar */}
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3">
-          <div
-            className={`w-full flex-1 flex items-center px-3.5 py-2.5 rounded-xl border transition-colors ${
-              isSketch
-                ? 'bg-[#fbf7ee] border-2 border-[#3c3836]'
-                : 'bg-[#131b2e] border-[#222f46] text-white focus-within:border-cyan-500/60'
-            }`}
-          >
+          <div className="w-full flex-1 flex items-center px-3.5 py-2.5 rounded-xl border transition-colors bg-[#131b2e] border-[#222f46] text-white focus-within:border-cyan-500/60">
             <Search className="w-4 h-4 opacity-50 mr-2.5 shrink-0" />
             <input
               type="text"
@@ -240,12 +166,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                 onClick={() => setSelectedCategory(cat)}
                 className={`text-xs px-3 py-2 rounded-lg font-mono font-medium whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? isSketch
-                      ? 'bg-[#d65d0e] text-white font-bold sketch-border-subtle'
-                      : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold'
-                    : isSketch
-                      ? 'bg-[#fbf7ee] text-[#282828] border border-[#3c3836]/30 hover:bg-[#ebdbb2]'
-                      : 'bg-[#151c2d] text-slate-400 border border-[#24314c] hover:text-white'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 font-bold'
+                    : 'bg-[#151c2d] text-slate-400 border border-[#24314c] hover:text-white'
                 }`}
               >
                 {cat === 'All' ? t.all : t.categories[cat as AICategory] || cat}
@@ -266,21 +188,13 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             ([category, presets]) => (
               <section key={category} className="space-y-4">
                 {/* Section Header */}
-                <div className="flex items-center justify-between border-b pb-2.5">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
                   <div className="flex items-center gap-2.5">
                     {getCategoryIcon(category)}
-                    <h2
-                      className={`text-xl sm:text-2xl font-bold tracking-tight ${
-                        isSketch ? 'font-sketch text-2xl sm:text-3xl text-[#282828]' : 'text-slate-100'
-                      }`}
-                    >
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">
                       {t.categories[category as AICategory] || category}
                     </h2>
-                    <span
-                      className={`text-xs font-mono px-2 py-0.5 rounded-full ${
-                        isSketch ? 'bg-[#ebdbb2] text-[#3c3836]' : 'bg-slate-800 text-slate-400'
-                      }`}
-                    >
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
                       {presets.length} {presets.length === 1 ? 'topic' : 'topics'}
                     </span>
                   </div>
@@ -292,11 +206,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                     <div
                       key={preset.id}
                       onClick={() => onSelectAlgorithm(preset)}
-                      className={`group cursor-pointer rounded-xl p-5 flex flex-col justify-between transition-all duration-200 transform hover:-translate-y-1 ${
-                        isSketch
-                          ? 'bg-[#fbf7ee] sketch-border hover:shadow-lg'
-                          : 'bg-[#111828]/80 hover:bg-[#151d32] border border-[#222f46] hover:border-cyan-500/50 shadow-md hover:shadow-cyan-500/10'
-                      }`}
+                      className="group cursor-pointer rounded-xl p-5 flex flex-col justify-between transition-all duration-200 transform hover:-translate-y-1 bg-[#111828]/80 hover:bg-[#151d32] border border-[#222f46] hover:border-cyan-500/50 shadow-md hover:shadow-cyan-500/10"
                     >
                       {/* Card Header */}
                       <div>
@@ -308,53 +218,30 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                           >
                             {t.difficulties[preset.difficulty] || preset.difficulty}
                           </span>
-                          <span
-                            className={`text-[11px] font-mono px-2 py-0.5 rounded font-semibold ${
-                              isSketch
-                                ? 'bg-[#ebdbb2] text-[#3c3836]'
-                                : 'bg-indigo-950/80 text-indigo-300 border border-indigo-800/40'
-                            }`}
-                          >
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-800/40">
                             {getPresetBadge(preset, language)}
                           </span>
                         </div>
 
-                        <h3
-                          className={`text-lg font-bold group-hover:text-cyan-400 transition-colors ${
-                            isSketch
-                              ? 'font-sketch text-2xl text-[#282828] group-hover:text-[#d65d0e]'
-                              : 'text-white'
-                          }`}
-                        >
+                        <h3 className="text-lg font-bold group-hover:text-cyan-400 transition-colors text-white">
                           {getPresetTitle(preset, language)}
                         </h3>
 
                         {/* Brief Summary */}
-                        <p
-                          className={`text-xs mt-2 leading-relaxed opacity-80 line-clamp-2 ${
-                            isSketch ? 'font-sketch text-base' : 'text-slate-300'
-                          }`}
-                        >
+                        <p className="text-xs mt-2 leading-relaxed opacity-80 line-clamp-2 text-slate-300">
                           {getPresetSummary(preset, language)}
                         </p>
 
-                        {/* Formula snippet */}
                         {/* Formula snippet rendered via KaTeX */}
                         {preset.formula && (
-                          <div
-                            className={`mt-2.5 p-2 rounded overflow-x-auto ${
-                              isSketch
-                                ? 'bg-[#ebdbb2]/50 text-[#282828] border border-[#3c3836]/20'
-                                : 'bg-slate-900/80 text-cyan-300 border border-slate-800'
-                            }`}
-                          >
+                          <div className="mt-2.5 p-2 rounded overflow-x-auto bg-slate-900/80 text-cyan-300 border border-slate-800">
                             <MathFormula math={preset.formula} className="text-xs" />
                           </div>
                         )}
                       </div>
 
                       {/* Card Footer Details */}
-                      <div className="mt-5 pt-3 border-t border-slate-700/20 dark:border-slate-800 space-y-3">
+                      <div className="mt-5 pt-3 border-t border-slate-800 space-y-3">
                         {/* Complexities */}
                         <div className="flex items-center justify-between text-[11px] font-mono opacity-70">
                           <span className="flex items-center gap-1">
@@ -369,11 +256,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                           {preset.tags.slice(0, 3).map((tag) => (
                             <span
                               key={tag}
-                              className={`text-[10px] font-mono px-1.5 py-0.2 rounded ${
-                                isSketch
-                                  ? 'bg-[#ebdbb2]/60 text-[#3c3836]'
-                                  : 'bg-slate-800/60 text-slate-400'
-                              }`}
+                              className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800/60 text-slate-400"
                             >
                               #{tag}
                             </span>
@@ -381,13 +264,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         </div>
 
                         {/* Launch Action */}
-                        <div
-                          className={`flex items-center justify-between pt-1 text-xs font-bold transition-colors ${
-                            isSketch
-                              ? 'text-[#d65d0e] group-hover:underline'
-                              : 'text-cyan-400 group-hover:text-cyan-300'
-                          }`}
-                        >
+                        <div className="flex items-center justify-between pt-1 text-xs font-bold transition-colors text-cyan-400 group-hover:text-cyan-300">
                           <span className="flex items-center gap-1.5">
                             <Play className="w-3.5 h-3.5 fill-current" />
                             {t.launchVisualizer}
@@ -405,11 +282,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       </main>
 
       {/* Footer */}
-      <footer
-        className={`w-full py-6 mt-12 border-t text-center text-xs font-mono transition-colors ${
-          isSketch ? 'border-[#3c3836]/20 text-[#7c6f64]' : 'border-slate-800 text-slate-500'
-        }`}
-      >
+      <footer className="w-full py-6 mt-12 border-t text-center text-xs font-mono transition-colors border-slate-800 text-slate-500">
         <p>
           Chuyen Ben Tre AIO — Open source interactive algorithm and AI execution tracer.
         </p>

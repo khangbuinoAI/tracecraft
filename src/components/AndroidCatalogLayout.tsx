@@ -9,10 +9,7 @@ import {
   ArrowRight,
   Menu,
   X,
-  Monitor,
   Smartphone,
-  Sun,
-  Moon,
   Maximize2,
   Wifi,
   BatteryCharging,
@@ -42,11 +39,9 @@ import cbtLogo from '../assets/cbt-logo.png';
 
 interface AndroidCatalogLayoutProps {
   theme: ThemeMode;
-  onToggleTheme: () => void;
   onSelectAlgorithm: (preset: AlgorithmPreset) => void;
   language: Language;
   onSelectLanguage: (lang: Language) => void;
-  onSwitchToDesktop?: () => void;
   onLaunchVisualizer?: () => void;
   isMobileScreen: boolean;
 }
@@ -55,11 +50,9 @@ type MainTab = 'home' | 'categories' | 'settings';
 
 export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
   theme,
-  onToggleTheme,
   onSelectAlgorithm,
   language,
   onSelectLanguage,
-  onSwitchToDesktop,
   onLaunchVisualizer,
   isMobileScreen,
 }) => {
@@ -174,7 +167,7 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
               className="flex items-center gap-1.5 bg-[#0d1322]/90 hover:bg-[#151f38] backdrop-blur-md border border-[#1f2c47] px-3 py-1.5 rounded-full shadow-lg text-xs font-semibold text-slate-200 transition-all active:scale-95"
               title={isDeviceFrame ? t.fullscreenView : t.phoneFrame}
             >
-              {isDeviceFrame ? (
+              {isDeviceFrame && !isMobileScreen ? (
                 <>
                   <Maximize2 className="w-3.5 h-3.5 text-cyan-400" />
                   <span>{t.fullscreenView}</span>
@@ -186,17 +179,6 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
                 </>
               )}
             </button>
-
-            {onSwitchToDesktop && (
-              <button
-                onClick={onSwitchToDesktop}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-3.5 py-1.5 rounded-full shadow-lg text-xs font-bold transition-all active:scale-95"
-                title={t.desktopStudio}
-              >
-                <Monitor className="w-3.5 h-3.5" />
-                <span>{t.desktopStudio}</span>
-              </button>
-            )}
           </div>
         </div>
       )}
@@ -284,16 +266,6 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
           {/* Right Top Actions */}
           <div className="flex items-center gap-1">
             <LanguageSwitch language={language} onSelectLanguage={onSelectLanguage} theme={theme} />
-
-            <button
-              onClick={onToggleTheme}
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
-                isDark ? 'text-amber-400 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-              title="Toggle Theme"
-            >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
           </div>
         </header>
 
@@ -540,23 +512,6 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
                     <span className="text-[10px] opacity-60">Tiếng Việt & English</span>
                   </div>
                   <LanguageSwitch language={language} onSelectLanguage={onSelectLanguage} theme={theme} />
-                </div>
-
-                <div className="w-full h-px bg-inherit opacity-40" />
-
-                <div className="flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold block">{language === 'vi' ? 'Giao diện' : 'Theme Mode'}</span>
-                    <span className="text-[10px] opacity-60">
-                      {isDark ? 'Clean Studio (Dark)' : 'Organic Sketch (Light)'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={onToggleTheme}
-                    className="p-2 rounded-xl border border-inherit text-xs font-bold"
-                  >
-                    {isDark ? '🌙 Studio' : '☀️ Sketch'}
-                  </button>
                 </div>
               </div>
 
