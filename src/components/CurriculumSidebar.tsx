@@ -26,14 +26,14 @@ interface CurriculumSidebarProps {
 }
 
 export const CurriculumSidebar: React.FC<CurriculumSidebarProps> = ({
-  theme: _theme,
+  theme,
   isOpen,
   onClose,
   selectedPreset,
   onSelectPreset,
   onViewFullCatalog,
 }) => {
-  const isSketch = false;
+  const isSketch = theme === 'sketch';
   const [search, setSearch] = useState('');
 
   // Filter topics

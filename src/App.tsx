@@ -14,7 +14,7 @@ import { AndroidCatalogLayout } from './components/AndroidCatalogLayout';
 import { CatalogView } from './components/CatalogView';
 import { detectDeviceUI } from './utils/deviceDetection';
 export const App: React.FC = () => {
-  const theme: ThemeMode = 'studio';
+  const theme: ThemeMode = 'sketch';
   const [isMobileScreen, setIsMobileScreen] = useState<boolean>(() => detectDeviceUI().isMobileOrTablet);
   const [viewMode, setViewMode] = useState<ViewMode>(() => detectDeviceUI().recommendedViewMode);
   const [studioTab, setStudioTab] = useState<StudioTab>('trace');
@@ -358,7 +358,7 @@ export const App: React.FC = () => {
 
   // Unified VizLearn-aligned studio architecture
   return (
-    <div className="h-screen w-screen flex overflow-hidden font-sans select-none transition-colors duration-300 animate-page-enter bg-[#090d16] text-slate-100 dark bg-viz-dots-dark">
+    <div className="h-screen w-screen flex overflow-hidden font-sans select-none transition-colors duration-300 animate-page-enter bg-[#fbfbfb] text-slate-800 bg-viz-dots">
       {/* 1. Leftmost Slim Navigation Rail */}
       <NavRail
         theme={theme}
