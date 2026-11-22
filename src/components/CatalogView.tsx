@@ -141,31 +141,21 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
               className="w-10 h-10 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(15,3,69,0.18)]"
             />
             <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`font-extrabold tracking-tight leading-none text-lg sm:text-xl ${
-                    isSketch ? 'text-[#282828]' : 'text-white'
-                  }`}
-                >
-                  Chuyen Ben Tre
-                </span>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider ${
-                    isSketch
-                      ? 'bg-[#ebdbb2] text-[#3c3836] border border-[#3c3836]/20'
-                      : 'bg-indigo-950/80 text-cyan-400 border border-cyan-800/40'
-                  }`}
-                >
-                  Curriculum
-                </span>
-              </div>
               <span
-                className={`text-[11px] font-mono tracking-[0.28em] uppercase leading-tight mt-0.5 ${
-                  isSketch ? 'text-[#504945]' : 'text-slate-300/80'
+                className={`font-extrabold tracking-tight leading-none text-lg sm:text-xl ${
+                  isSketch ? 'text-[#282828]' : 'text-white'
                 }`}
               >
-                AIO
+                Chuyen Ben Tre
               </span>
+              <div
+                className={`flex items-center gap-2 text-[11px] font-mono tracking-[0.24em] uppercase leading-tight mt-1 ${
+                  isSketch ? 'text-[#504945]' : 'text-slate-300/85'
+                }`}
+              >
+                <span className="font-bold">AIO</span>
+                <span>Curriculum</span>
+              </div>
             </div>
           </div>
 
