@@ -64,27 +64,26 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Brand & Navigation */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <div
-            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg p-0.5 shrink-0 ${
-              isSketch
-                ? 'bg-[#0f0345] sketch-border-subtle shadow-sm'
-                : 'bg-[#0f0345] border border-indigo-400/30 shadow-lg shadow-indigo-500/20'
-            }`}
-          >
-            <img
-              src={cbtLogo}
-              alt="Chuyen Ben Tre AIO"
-              className="w-full h-full object-contain"
-            />
-          </div>
+          <img
+            src={cbtLogo}
+            alt="Chuyen Ben Tre AIO"
+            className="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(15,3,69,0.18)]"
+          />
 
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex flex-col leading-none">
             <span
-              className={`font-extrabold tracking-tight text-lg ${
-                isSketch ? 'font-sketch text-2xl tracking-normal text-[#282828]' : 'text-white'
+              className={`font-extrabold tracking-tight text-base leading-none ${
+                isSketch ? 'text-[#282828]' : 'text-white'
               }`}
             >
-              Chuyen Ben Tre AIO
+              Chuyen Ben Tre
+            </span>
+            <span
+              className={`text-[10px] font-mono tracking-[0.26em] uppercase mt-0.5 ${
+                isSketch ? 'text-[#504945]' : 'text-slate-300/80'
+              }`}
+            >
+              AIO
             </span>
           </div>
 

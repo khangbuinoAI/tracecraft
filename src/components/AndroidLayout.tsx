@@ -820,12 +820,14 @@ export const AndroidLayout: React.FC<AndroidLayoutProps> = ({
               {/* Drawer Header */}
               <div className="p-4 border-b border-inherit flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl p-1 bg-[#0f0345] border border-indigo-400/30 flex items-center justify-center shadow-md shrink-0">
-                    <img src={cbtLogo} alt="Chuyen Ben Tre AIO" className="w-full h-full object-contain" />
-                  </div>
+                  <img
+                    src={cbtLogo}
+                    alt="Chuyen Ben Tre AIO"
+                    className="w-8 h-8 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(15,3,69,0.18)]"
+                  />
                   <div>
-                    <h2 className="text-sm font-bold font-mono tracking-tight">Chuyen Ben Tre AIO</h2>
-                    <p className="text-[10px] opacity-60">{t.curriculum}</p>
+                    <h2 className="text-sm font-bold tracking-tight leading-tight">Chuyen Ben Tre</h2>
+                    <p className="text-[10px] font-mono tracking-[0.2em] uppercase opacity-60">AIO • {t.curriculum}</p>
                   </div>
                 </div>
 

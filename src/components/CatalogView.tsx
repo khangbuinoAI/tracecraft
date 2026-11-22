@@ -135,27 +135,19 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       >
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className={`flex items-center justify-center w-10 h-10 rounded-lg p-0.5 shrink-0 ${
-                isSketch
-                  ? 'bg-[#0f0345] sketch-border-subtle shadow-sm'
-                  : 'bg-[#0f0345] border border-indigo-400/30 shadow-lg shadow-indigo-500/20'
-              }`}
-            >
-              <img
-                src={cbtLogo}
-                alt="Chuyen Ben Tre AIO"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
+            <img
+              src={cbtLogo}
+              alt="Chuyen Ben Tre AIO"
+              className="w-10 h-10 object-contain shrink-0 drop-shadow-[0_1px_2px_rgba(15,3,69,0.18)]"
+            />
+            <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span
-                  className={`font-extrabold tracking-tight text-xl ${
-                    isSketch ? 'font-sketch text-2xl tracking-normal text-[#282828]' : 'text-white'
+                  className={`font-extrabold tracking-tight leading-none text-lg sm:text-xl ${
+                    isSketch ? 'text-[#282828]' : 'text-white'
                   }`}
                 >
-                  Chuyen Ben Tre AIO
+                  Chuyen Ben Tre
                 </span>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider ${
@@ -167,6 +159,13 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   Curriculum
                 </span>
               </div>
+              <span
+                className={`text-[11px] font-mono tracking-[0.28em] uppercase leading-tight mt-0.5 ${
+                  isSketch ? 'text-[#504945]' : 'text-slate-300/80'
+                }`}
+              >
+                AIO
+              </span>
             </div>
           </div>
 

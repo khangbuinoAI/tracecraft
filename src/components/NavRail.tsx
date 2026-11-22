@@ -48,12 +48,12 @@ export const NavRail: React.FC<NavRailProps> = ({
         <button
           onClick={onGoHome}
           title="Chuyen Ben Tre AIO Home Catalog"
-          className="w-9 h-9 rounded-xl p-1 flex items-center justify-center bg-[#0f0345] border border-indigo-400/30 hover:scale-105 transition-transform shadow-sm"
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-transparent hover:scale-105 transition-transform"
         >
           <img
             src={cbtLogo}
             alt="Chuyen Ben Tre AIO"
-            className="w-full h-full object-contain"
+            className="w-8 h-8 object-contain drop-shadow-[0_1px_2px_rgba(15,3,69,0.18)]"
           />
         </button>
 
