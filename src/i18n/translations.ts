@@ -2,7 +2,7 @@ import type { Language, AICategory, DifficultyLevel } from '../types';
 
 export const TRANSLATIONS = {
   en: {
-    appTitle: 'TraceCraft',
+    appTitle: 'Chuyen Ben Tre AIO',
     appSubtitle: 'Interactive Algorithm & AI Visualizations',
     tagline: 'Interactive Execution Tracing Platform',
     heroTitle: 'Interactive AI & Machine Learning',
@@ -83,7 +83,7 @@ export const TRANSLATIONS = {
   },
 
   vi: {
-    appTitle: 'TraceCraft',
+    appTitle: 'Chuyen Ben Tre AIO',
     appSubtitle: 'Trực quan hóa Thuật toán & Mô hình AI',
     tagline: 'Nền tảng Mô phỏng Thực thi Thuật toán Tương tác',
     heroTitle: 'Học Trực quan AI & Machine Learning',

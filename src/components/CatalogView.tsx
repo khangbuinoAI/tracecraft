@@ -4,7 +4,6 @@ import {
   Sparkles, 
   Play, 
   Clock, 
-  Cpu, 
   Binary, 
   Layers, 
   BrainCircuit, 
@@ -29,6 +28,7 @@ import {
 import { MathFormula } from './MathFormula';
 import { getLocalizedText } from '../i18n/translations';
 import { LanguageSwitch } from './LanguageSwitch';
+import cbtLogo from '../assets/cbt-logo.png';
 
 interface CatalogViewProps {
   theme: ThemeMode;
@@ -136,13 +136,17 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`flex items-center justify-center w-9 h-9 rounded-lg font-bold text-lg ${
+              className={`flex items-center justify-center w-10 h-10 rounded-lg p-0.5 shrink-0 ${
                 isSketch
-                  ? 'bg-[#d65d0e] text-white sketch-border-subtle font-sketch text-xl'
-                  : 'bg-gradient-to-br from-indigo-500 to-cyan-400 text-white shadow-lg shadow-indigo-500/20'
+                  ? 'bg-[#0f0345] sketch-border-subtle shadow-sm'
+                  : 'bg-[#0f0345] border border-indigo-400/30 shadow-lg shadow-indigo-500/20'
               }`}
             >
-              {isSketch ? '✍' : <Cpu className="w-5 h-5" />}
+              <img
+                src={cbtLogo}
+                alt="Chuyen Ben Tre AIO"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -151,7 +155,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                     isSketch ? 'font-sketch text-2xl tracking-normal text-[#282828]' : 'text-white'
                   }`}
                 >
-                  TraceCraft
+                  Chuyen Ben Tre AIO
                 </span>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider ${
@@ -425,7 +429,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         }`}
       >
         <p>
-          TraceCraft — Open source interactive algorithm and AI execution tracer.
+          Chuyen Ben Tre AIO — Open source interactive algorithm and AI execution tracer.
         </p>
       </footer>
     </div>

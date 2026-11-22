@@ -38,6 +38,7 @@ import { getLocalizedText } from '../i18n/translations';
 import { MathFormula } from './MathFormula';
 import { LanguageSwitch } from './LanguageSwitch';
 import { AndroidIcon } from './AndroidLayout';
+import cbtLogo from '../assets/cbt-logo.png';
 
 interface AndroidCatalogLayoutProps {
   theme: ThemeMode;
@@ -260,12 +261,14 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
             </button>
 
             {/* App Brand */}
-            <div className="flex items-center gap-1.5">
-              <AndroidIcon className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="text-sm font-extrabold font-mono tracking-tight text-slate-900 dark:text-white">
-                TraceCraft
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg p-0.5 bg-[#0f0345] border border-indigo-400/30 flex items-center justify-center shrink-0">
+                <img src={cbtLogo} alt="Chuyen Ben Tre AIO" className="w-full h-full object-contain" />
+              </div>
+              <span className="text-sm font-extrabold font-mono tracking-tight text-slate-900 dark:text-white truncate">
+                Chuyen Ben Tre AIO
               </span>
-              <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded-full border border-emerald-500/30">
+              <span className="text-[9px] font-mono bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded-full border border-emerald-500/30 shrink-0">
                 M3
               </span>
             </div>
@@ -515,7 +518,7 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
                 <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   {language === 'vi' ? 'Cài đặt & Giới thiệu' : 'Settings & About'}
                 </h2>
-                <p className="text-xs opacity-70">TraceCraft Android Edition — v1.0.0 M3</p>
+                <p className="text-xs opacity-70">Chuyen Ben Tre AIO Android Edition — v1.0.0 M3</p>
               </div>
 
               {/* Preferences Card */}
@@ -550,15 +553,15 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
                 </div>
               </div>
 
-              {/* About TraceCraft */}
+              {/* About Chuyen Ben Tre AIO */}
               <div
                 className={`rounded-2xl border p-3.5 space-y-2 text-xs leading-relaxed ${
                   isDark ? 'bg-[#0f1526] border-[#1c273e]' : 'bg-white border-slate-200'
                 }`}
               >
-                <div className="flex items-center gap-1.5 font-bold text-emerald-400">
-                  <AndroidIcon className="w-4 h-4" />
-                  <span>TraceCraft Android Platform</span>
+                <div className="flex items-center gap-2 font-bold text-emerald-400">
+                  <img src={cbtLogo} alt="Chuyen Ben Tre AIO" className="w-4 h-4 object-contain" />
+                  <span>Chuyen Ben Tre AIO Android Platform</span>
                 </div>
                 <p className="opacity-80 text-[11px]">
                   {language === 'vi'
@@ -590,12 +593,12 @@ export const AndroidCatalogLayout: React.FC<AndroidCatalogLayoutProps> = ({
               }`}
             >
               <div className="p-4 border-b border-inherit flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-slate-950 shadow">
-                    <AndroidIcon className="w-5 h-5 text-slate-950" />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl p-1 bg-[#0f0345] border border-indigo-400/30 flex items-center justify-center shadow shrink-0">
+                    <img src={cbtLogo} alt="Chuyen Ben Tre AIO" className="w-full h-full object-contain" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold font-mono tracking-tight">TraceCraft Android</h2>
+                    <h2 className="text-sm font-bold font-mono tracking-tight">Chuyen Ben Tre AIO</h2>
                     <p className="text-[10px] opacity-60">{t.curriculum}</p>
                   </div>
                 </div>

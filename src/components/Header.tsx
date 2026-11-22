@@ -6,13 +6,13 @@ import {
   Smartphone, 
   Monitor, 
   RotateCcw,
-  Cpu,
   ArrowLeft,
   BookOpen,
   PanelLeft,
   PanelRight
 } from 'lucide-react';
 import type { ThemeMode, ViewMode, AlgorithmPreset, StudioTab } from '../types';
+import cbtLogo from '../assets/cbt-logo.png';
 
 interface HeaderProps {
   theme: ThemeMode;
@@ -65,13 +65,17 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Brand & Navigation */}
         <div className="flex items-center gap-2 sm:gap-3">
           <div
-            className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg font-bold text-lg shrink-0 ${
+            className={`flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg p-0.5 shrink-0 ${
               isSketch
-                ? 'bg-[#d65d0e] text-white sketch-border-subtle font-sketch text-xl'
-                : 'bg-gradient-to-br from-indigo-500 to-cyan-400 text-white shadow-lg shadow-indigo-500/20'
+                ? 'bg-[#0f0345] sketch-border-subtle shadow-sm'
+                : 'bg-[#0f0345] border border-indigo-400/30 shadow-lg shadow-indigo-500/20'
             }`}
           >
-            {isSketch ? '✍' : <Cpu className="w-5 h-5" />}
+            <img
+              src={cbtLogo}
+              alt="Chuyen Ben Tre AIO"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div className="hidden sm:block">
@@ -80,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
                 isSketch ? 'font-sketch text-2xl tracking-normal text-[#282828]' : 'text-white'
               }`}
             >
-              TraceCraft
+              Chuyen Ben Tre AIO
             </span>
           </div>
 

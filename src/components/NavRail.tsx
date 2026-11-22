@@ -12,6 +12,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import type { ThemeMode, AICategory } from '../types';
+import cbtLogo from '../assets/cbt-logo.png';
 
 interface NavRailProps {
   theme: ThemeMode;
@@ -46,10 +47,14 @@ export const NavRail: React.FC<NavRailProps> = ({
         {/* Logo */}
         <button
           onClick={onGoHome}
-          title="TraceCraft Home Catalog"
-          className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white bg-slate-900 dark:bg-indigo-600 hover:scale-105 transition-transform shadow-sm"
+          title="Chuyen Ben Tre AIO Home Catalog"
+          className="w-9 h-9 rounded-xl p-1 flex items-center justify-center bg-[#0f0345] border border-indigo-400/30 hover:scale-105 transition-transform shadow-sm"
         >
-          <span className="font-display font-bold text-lg tracking-tight">T</span>
+          <img
+            src={cbtLogo}
+            alt="Chuyen Ben Tre AIO"
+            className="w-full h-full object-contain"
+          />
         </button>
 
         {/* Sidebar Toggle */}
