@@ -163,29 +163,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 pt-10 pb-6 w-full text-center">
-        <div
-          className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono mb-4 ${
-            isSketch
-              ? 'bg-[#ebdbb2] text-[#3c3836] border border-[#3c3836]/30'
-              : 'bg-cyan-950/60 text-cyan-300 border border-cyan-800/50'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{t.tagline}</span>
-        </div>
-
-        <h1
-          className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-6 ${
-            isSketch
-              ? 'font-sketch text-4xl sm:text-6xl text-[#282828]'
-              : 'text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-300'
-          }`}
-        >
-          {t.heroTitle}
-        </h1>
-
+      {/* Search & Filter Section */}
+      <section className="max-w-7xl mx-auto px-4 pt-6 pb-4 w-full text-center">
         {/* Search & Filter Bar */}
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3">
           <div
