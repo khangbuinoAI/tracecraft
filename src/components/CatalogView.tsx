@@ -206,7 +206,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         </div>
 
         <h1
-          className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 ${
+          className={`text-3xl sm:text-5xl font-extrabold tracking-tight mb-6 ${
             isSketch
               ? 'font-sketch text-4xl sm:text-6xl text-[#282828]'
               : 'text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-300'
@@ -215,15 +215,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           {t.heroTitle}
         </h1>
 
-        <p
-          className={`max-w-2xl mx-auto text-sm sm:text-base leading-relaxed opacity-80 ${
-            isSketch ? 'font-sketch text-lg sm:text-xl' : 'text-slate-300'
-          }`}
-        >
-          {t.heroSubtitle}
-        </p>
         {/* Search & Filter Bar */}
-        <div className="max-w-3xl mx-auto mt-8 flex flex-col sm:flex-row items-center gap-3">
+        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center gap-3">
           <div
             className={`w-full flex-1 flex items-center px-3.5 py-2.5 rounded-xl border transition-colors ${
               isSketch
